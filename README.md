@@ -4,6 +4,7 @@
 
 📖 English · [한국어 README](./README.ko.md)
 
+[![CI](https://github.com/hyukjunkwon/halias/actions/workflows/ci.yml/badge.svg)](https://github.com/hyukjunkwon/halias/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/halias.svg)](https://www.npmjs.com/package/halias)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](https://nodejs.org)
@@ -21,7 +22,13 @@ Managing shell aliases used to mean editing `.zshrc` by hand. **halias** turns i
 
 ## Install
 
-> ⚠️ Not yet published to npm. For now, clone and link locally:
+```bash
+npm install -g halias
+```
+
+Both `halias` and `ha` will be available globally. The shorter `ha` is recommended for daily use.
+
+### From source
 
 ```bash
 git clone https://github.com/hyukjunkwon/halias.git
@@ -30,21 +37,28 @@ npm install
 npm run link:local      # registers both `halias` and `ha` globally
 ```
 
-Once published, you'll be able to install via:
-```bash
-npm install -g halias
-```
-
 ## Quick start
 
 ```bash
-ha add               # add your first shortcut interactively
-ha install           # add shell integration to ~/.zshrc (one-time)
-source ~/.zshrc      # apply (or open a new terminal)
+# 1. Add your first shortcut interactively
+ha add
+#   ◇ Name?         gs
+#   ◇ Type?         alias
+#   ◇ Command?      git status
+#   ◇ Description?  show working tree status   (optional)
+#   ◇ Tags?         git                        (optional)
 
-gs                   # use it! (assuming you registered `gs` → `git status`)
+# 2. Install shell integration (one-time setup)
+ha install
 
-ha                   # fuzzy search — find any shortcut
+# 3. Apply (or just open a new terminal)
+source ~/.zshrc
+
+# 4. Use it!
+gs                   # → runs `git status`
+
+# 5. Find shortcuts later
+ha                   # fuzzy search across all your shortcuts
 hareload             # apply newly added shortcuts to current shell
 ```
 
@@ -172,11 +186,15 @@ Everything is plain text, version-controllable, and easy to back up.
 The first version ships with everything you need for personal alias management:
 core CRUD, fuzzy search, usage stats, backup/restore, and an environment doctor.
 
-### Coming next
+### Future versions
 
-- npm publish — `npm i -g halias` for everyone
-- First-run onboarding flow
-- Demo GIF for the README
+Driven by real usage and friction discovered in daily work, not by feature checklists. Some likely candidates:
+
+- **First-run onboarding** — auto-suggest `ha install` on first invocation
+- **`$EDITOR` mode for function bodies** — edit multi-line functions in vim/code
+- **Search results sorted by usage frequency**
+
+Suggestions and bug reports welcome via [issues](https://github.com/hyukjunkwon/halias/issues).
 
 ## Development
 
