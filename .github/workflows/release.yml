@@ -1,0 +1,102 @@
+name: Release
+
+# 'v로 시작하는 태그' push 될 때만 실행 (예: v0.1.1, v1.2.3)
+# 일반 main push 와 분리 — 의도치 않은 publish 방지
+on:
+    push:
+        tags:
+            - "v*"
+
+# 같은 태그로 동시에 두 번 돌지 않도록 (재시도 시 안전)
+concurrency:
+    group: release-${{ github.ref }}
+    cancel-in-progress: false
+
+jobs:
+    release:
+        name: Publish to npm + GitHub Release
+        runs-on: ubuntu-latest
+
+        permissions:
+            contents: write # GitHub Release 생성용
+            id-token: write # npm provenance 용
+
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0 # CHANGELOG 추출 + tag 정보 위해 전체 히스토리
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+                  registry-url: "https://registry.npmjs.org"
+                  cache: "npm"
+
+            - name: Install dependencies
+              run: npm ci
+
+            # CD라고 검증 건너뛰면 안 됨 — publish 사고 가장 큰 원인
+            - name: Type check
+              run: npx tsc --noEmit
+
+            - name: Build
+              run: npm run build
+
+            - name: Verify build output
+              run: |
+                  test -f dist/cli.js || (echo "dist/cli.js missing" && exit 1)
+                  head -1 dist/cli.js | grep -q "^#!/usr/bin/env node" || (echo "shebang missing" && exit 1)
+                  node dist/cli.js --version
+                  node dist/cli.js --help
+
+            # 태그(v0.1.1)와 package.json 버전(0.1.1)이 일치하는지 검증.
+            # 불일치 시 publish 거부 — 사람의 실수 방어.
+            - name: Verify tag matches package.json
+              run: |
+                  TAG_VERSION="${GITHUB_REF#refs/tags/v}"
+                  PKG_VERSION=$(node -p "require('./package.json').version")
+                  if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+                    echo "❌ Tag v$TAG_VERSION does not match package.json version $PKG_VERSION"
+                    exit 1
+                  fi
+                  echo "✓ Tag and package.json both at v$TAG_VERSION"
+
+            # --provenance: 이 패키지가 어느 GitHub Actions 워크플로우의
+            # 어느 commit에서 빌드됐는지 npm registry에 기록됨.
+            - name: Publish to npm
+              run: npm publish --provenance --access public
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+            # CHANGELOG.md에서 현재 태그 버전 섹션만 잘라내서 Release 본문으로
+            - name: Extract release notes from CHANGELOG
+              id: changelog
+              run: |
+                  VERSION="${GITHUB_REF#refs/tags/v}"
+                  NOTES=$(awk -v ver="$VERSION" '
+                    /^## \[/ {
+                      if (found) exit
+                      if ($0 ~ "\\[" ver "\\]") { found = 1; next }
+                    }
+                    found { print }
+                  ' CHANGELOG.md)
+
+                  {
+                    echo "notes<<HALIAS_EOF"
+                    echo "$NOTES"
+                    echo "HALIAS_EOF"
+                  } >> "$GITHUB_OUTPUT"
+
+            - name: Create GitHub Release
+              uses: softprops/action-gh-release@v2
+              with:
+                  name: ${{ github.ref_name }}
+                  body: |
+                      ${{ steps.changelog.outputs.notes }}
+
+                      ---
+
+                      📦 [npm package](https://www.npmjs.com/package/halias/v/${{ github.ref_name }})
+                  # prerelease 자동 감지 — v0.1.0-beta, v1.0.0-rc.1 등
+                  prerelease: ${{ contains(github.ref_name, '-') }}

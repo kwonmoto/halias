@@ -1,0 +1,49 @@
+name: CI
+
+on:
+    push:
+        branches: [ main ]
+    pull_request:
+        branches: [ main ]
+
+# 같은 브랜치에서 새 push가 오면 진행 중인 워크플로우 취소 (쓸데없는 시간 절약)
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    build:
+        name: Build & Typecheck (Node ${{ matrix.node }})
+        runs-on: ubuntu-latest
+
+        strategy:
+            fail-fast: false
+            matrix:
+                node: [ 20, 22 ]
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ matrix.node }}
+                  # npm 캐시 활성화 — 두 번째 실행부터 install 속도 ↑
+                  cache: "npm"
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Type check
+              run: npx tsc --noEmit
+
+            - name: Build
+              run: npm run build
+
+            # 빌드 결과물 sanity check — shebang과 버전이 정상인지
+            - name: Verify build output
+              run: |
+                  test -f dist/cli.js || (echo "dist/cli.js missing" && exit 1)
+                  head -1 dist/cli.js | grep -q "^#!/usr/bin/env node" || (echo "shebang missing" && exit 1)
+                  node dist/cli.js --version
+                  node dist/cli.js --help
