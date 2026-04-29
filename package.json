@@ -1,0 +1,59 @@
+{
+  "name": "halias",
+  "version": "0.1.0",
+  "description": "Hyper alias — manage shell aliases and functions with an interactive CLI. Search, edit, track usage, and back up — all without touching .zshrc.",
+  "type": "module",
+  "bin": {
+    "halias": "./dist/cli.js",
+    "ha": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup src/cli.ts --format esm --target node20 --clean --no-dts",
+    "dev": "tsx src/cli.ts",
+    "start": "node dist/cli.js",
+    "link:local": "npm run build && npm link",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "alias",
+    "shell",
+    "zsh",
+    "bash",
+    "cli",
+    "shortcut",
+    "productivity",
+    "dotfiles",
+    "fzf"
+  ],
+  "author": "kwonmoto",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kwonmoto/halias.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kwonmoto/halias/issues"
+  },
+  "homepage": "https://github.com/kwonmoto/halias#readme",
+  "dependencies": {
+    "@clack/prompts": "^0.7.0",
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "tsup": "^8.3.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
