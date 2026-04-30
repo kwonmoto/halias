@@ -4,7 +4,6 @@
 
 📖 English · [한국어 README](./README.ko.md)
 
-[![CI](https://github.com/hyukjunkwon/halias/actions/workflows/ci.yml/badge.svg)](https://github.com/hyukjunkwon/halias/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/halias.svg)](https://www.npmjs.com/package/halias)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](https://nodejs.org)
@@ -13,7 +12,8 @@
 
 Managing shell aliases used to mean editing `.zshrc` by hand. **halias** turns it into an app:
 
-- ✨ **Interactive add** (`ha add`) — Clack-powered TUI with type selection, validation, and a preview before saving
+- 🎯 **Context-aware ranking** — shortcuts you use in this directory float to the top of search. No manual grouping required.
+- ✨ **Interactive add** (`ha add`) — Clack-powered TUI ...
 - 🔍 **Fuzzy search** (`ha`) — fzf integration searches across name, command, tags, and description
 - 📊 **Auto stats** — every shortcut is generated as a wrapper function, so usage is tracked automatically
 - 🛡️ **Safety nets** — system command conflict detection, frequent-use confirmation on delete
@@ -104,14 +104,23 @@ This unification means `ha stats` works identically for aliases and functions, a
 
 Hit `ha` with no args to drop into a full-text search across all your shortcuts:
 
-```
+​```
 halias❯ git
-gs        git status                      #git       Show working tree status
-gp        git pull                        #git,daily Pull from origin
-mkcd      mkdir -p "$1" && cd "$1"        #fs        Make and enter directory
-```
+gs    git status         #git    ★ 12회   Show working tree status
+dev   pnpm dev           #js     ★ 8회    Start dev server
+gp    git pull           #git    34회     Pull from origin
+mkcd  mkdir -p && cd     #fs              Make and enter directory
+​```
 
 Search matches across **name, command body, tags, and description**. Try searching for "polled" — if you described `gp` as "pull from origin", it'll match.
+
+### Context-aware ranking ⭐
+
+halias automatically tracks which shortcuts you use in each directory. When you run `ha`, shortcuts you've used in the **current directory** float to the top, marked with `★`. Global frequency is the tiebreaker.
+
+Example: in `~/work/myapp`, `dev` (used 8 times here) ranks above `gs` (used 12 times globally but only once here). Move to `~/side/api` and the ranking shifts to match what you actually do there.
+
+This means **you don't need to organize aliases manually** — they organize themselves around your usage patterns.
 
 ### fzf installation
 

@@ -2,6 +2,7 @@ import * as p from '@clack/prompts';
 import chalk from 'chalk';
 import { readStore } from '../core/store.js';
 import { isFzfAvailable, runFzf } from '../lib/fzf.js';
+import { scoreShortcutsForDirectory, type ScoredShortcut } from '../core/stats.js';
 import type { Shortcut } from '../core/types.js';
 
 /**
@@ -24,12 +25,26 @@ export async function runSearch(): Promise<void> {
     return;
   }
 
+  // 컨텍스트 점수 계산 — 현재 디렉토리에서 자주 쓴 게 위로 가도록
+  const currentDir = process.cwd();
+  const scores = await scoreShortcutsForDirectory(
+    store.shortcuts.map((s) => s.name),
+    currentDir,
+  );
+
+  const scoreMap = new Map(scores.map((s) => [s.name, s]));
+  const ranked = [...store.shortcuts].sort((a, b) => {
+    const aScore = scoreMap.get(a.name)?.score ?? 0;
+    const bScore = scoreMap.get(b.name)?.score ?? 0;
+    if (bScore !== aScore) return bScore - aScore;
+    return a.name.localeCompare(b.name);
+  });
+
   const selectedName = isFzfAvailable()
-    ? await searchWithFzf(store.shortcuts)
-    : await searchWithClack(store.shortcuts);
+    ? await searchWithFzf(ranked, scoreMap)
+    : await searchWithClack(ranked, scoreMap);
 
   if (!selectedName) {
-    // 사용자가 취소 — 조용히 종료
     return;
   }
 
@@ -61,18 +76,20 @@ function summarizeCommand(s: Shortcut): string {
  *   --with-nth가 검색 범위에도 영향을 줘서 이름 외엔 매치가 안 됨.
  *   navi 같은 도구들이 쓰는 표준 패턴인 "한 줄에 모든 정보"로 변경.
  */
-async function searchWithFzf(shortcuts: Shortcut[]): Promise<string | null> {
+async function searchWithFzf(
+  shortcuts: Shortcut[],
+  scoreMap: Map<string, ScoredShortcut>,
+): Promise<string | null> {
   const sanitize = (s: string) => s.replace(/[\t\n]/g, ' ');
-
-  // 가장 긴 이름에 맞춰 정렬 (최소 8칸)
   const maxName = Math.max(...shortcuts.map((s) => s.name.length), 8);
 
   const lines = shortcuts.map((s) => {
     const cmd = sanitize(summarizeCommand(s));
     const tagStr = s.tags.length > 0 ? `#${s.tags.join(',')}` : '';
     const desc = sanitize(s.description ?? '');
+    const usage = formatUsageHint(scoreMap.get(s.name));
 
-    return [s.name.padEnd(maxName), cmd.padEnd(40), tagStr, desc]
+    return [s.name.padEnd(maxName), cmd.padEnd(40), tagStr.padEnd(12), usage, desc]
       .filter(Boolean)
       .join('  ')
       .trimEnd();
@@ -80,20 +97,37 @@ async function searchWithFzf(shortcuts: Shortcut[]): Promise<string | null> {
 
   const result = await runFzf(lines.join('\n'), {
     prompt: 'halias❯ ',
-    header: `단축키 ${shortcuts.length}개 · 이름/명령/태그/설명 모두 검색 · Esc 취소`,
+    header: `단축키 ${shortcuts.length}개 · ★ = 현재 디렉토리에서 사용 · Esc 취소`,
+    // --no-sort 로 외부 정렬(점수순) 유지 — fzf 가 자체 정렬 못 하게.
+    extraArgs: ['--no-sort'],
   });
 
   if (!result) return null;
-
-  // 첫 토큰이 이름 (이름은 영문/숫자/_ 만 허용되어 공백 포함 안 됨)
   return result.trim().split(/\s+/)[0] ?? null;
 }
 
 /**
- * fzf 없을 때의 폴백 — Clack select.
- * 검색은 못 하지만 화살표로 선택 가능.
+ * 사용 횟수를 검색 결과에 표시할 짧은 hint 로 변환.
+ *
+ * - 현재 디렉토리에서 쓴 게 있으면 → ★ N회
+ * - 그 외 글로벌 사용만 있으면 → N회
+ * - 안 쓰였으면 → 빈 문자열
  */
-async function searchWithClack(shortcuts: Shortcut[]): Promise<string | null> {
+function formatUsageHint(scored: ScoredShortcut | undefined): string {
+  if (!scored) return '';
+  if (scored.contextCount > 0) {
+    return `★ ${scored.contextCount}회`;
+  }
+  if (scored.globalCount > 0) {
+    return `${scored.globalCount}회`;
+  }
+  return '';
+}
+
+async function searchWithClack(
+  shortcuts: Shortcut[],
+  scoreMap: Map<string, ScoredShortcut>,
+): Promise<string | null> {
   console.log(
     chalk.dim('ℹ fzf가 설치되어 있지 않아 단순 선택 모드로 실행합니다.\n  더 나은 검색을 원하시면: ') +
       chalk.cyan('ha doctor') +
@@ -103,11 +137,15 @@ async function searchWithClack(shortcuts: Shortcut[]): Promise<string | null> {
 
   const selected = await p.select({
     message: '단축키 선택',
-    options: shortcuts.map((s) => ({
-      value: s.name,
-      label: s.name,
-      hint: summarizeCommand(s),
-    })),
+    options: shortcuts.map((s) => {
+      const usage = formatUsageHint(scoreMap.get(s.name));
+      const cmd = summarizeCommand(s);
+      return {
+        value: s.name,
+        label: s.name,
+        hint: usage ? `${cmd}  ${chalk.dim(usage)}` : cmd,
+      };
+    }),
   });
 
   if (p.isCancel(selected)) return null;

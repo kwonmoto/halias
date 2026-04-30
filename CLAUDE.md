@@ -70,7 +70,9 @@ halias/
 ```
 ~/.halias/
 ├── shortcuts.json          # 단일 진실 공급원 (사용자 데이터)
-├── stats.log               # append-only 사용 로그 (timestamp + name 한 줄씩)
+├── stats.log               # append-only 사용 로그
+│                           # 형식: <timestamp>\t<name>\t<directory> (탭 구분)
+│                           # 옛 형식 (공백 구분) 도 호환 — 컨텍스트 점수만 못 씀
 └── generated/
     └── aliases.sh          # JSON → 셸 함수로 변환된 결과
 ```
@@ -150,6 +152,26 @@ writing 도중 죽거나 동시 편집해도 파일이 깨지지 않음. 중요.
 ### 7. fzf는 선택적 의존
 
 설치되어 있으면 `ha` 검색 UX가 훨씬 좋아지지만, 없어도 Clack select로 폴백. 자동 설치는 `ha doctor`가 OS/패키지매니저 감지 후 사용자 동의 받고 진행 (sudo 필요한 환경은 명령어만 안내).
+
+### 8. 컨텍스트 인식 정렬은 자동 학습 (사용자 결정 X)
+
+`ha` 검색 결과는 **현재 디렉토리에서의 사용 빈도** 를 기반으로 정렬됨. 사용자가 "이 단축키는 이 폴더용" 같은 명시적 분류를 하지 않음 — 사용 패턴이 자연스럽게 학습됨.
+
+이전에 검토했다가 거부된 대안: **명시적 디렉토리 scope 필드**. 사용자에게 "이 단축키 어디서 쓸 거예요?" 묻는 방식. 거부 이유:
+- 사용자 부담 ↑
+- 같은 이름 여러 동작 → 헷갈림
+- 진입 장벽 ↑
+
+대신 데이터로 답하기로. macOS Spotlight 가 자주 여는 앱을 위로 올리는 것과 같은 원리.
+
+핵심 알고리즘 (`core/stats.ts` 의 `scoreShortcutsForDirectory`):
+​```
+score = α × (현재 디렉토리에서 쓴 횟수) + β × (전체 빈도)
+       α=10, β=1 (현재 디렉토리 강하게 우선)
+​```
+
+stats.log 형식: `<timestamp>\t<name>\t<directory>` (탭 구분).
+옛 형식 (`<timestamp> <name>`) 도 호환 유지 — 글로벌 빈도엔 합산되지만 컨텍스트엔 영향 X.
 
 ## Coding conventions
 

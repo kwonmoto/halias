@@ -5,11 +5,17 @@ All notable changes to halias will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.2.0] - 2026-04-30
 
-### Features
+### Added
 
-- 
+- **Context-aware fuzzy search** — `ha` now ranks shortcuts by usage frequency in the current directory. Shortcuts you've used here will float to the top, with global frequency as a tiebreaker. Look for the ★ marker to see context matches.
+- Stats log now tracks the directory where each shortcut was invoked. This enables future per-directory insights commands.
+
+### Changed
+
+- `_halias_track` helper now records `<timestamp>\t<name>\t<pwd>` (tab-separated) instead of the previous `<timestamp> <name>` (space-separated). Both formats are read transparently — older log entries continue to count toward global frequency stats.
+
 
 ## [0.1.0] — 2026-04-29
 

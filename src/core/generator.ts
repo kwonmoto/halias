@@ -10,11 +10,13 @@ const HEADER = `#!/usr/bin/env bash
 # ─────────────────────────────────────────────
 
 # 사용 통계 추적 함수
+# 형식: <timestamp>\t<name>\t<directory>
+# 탭 구분 — 미래에 필드 추가해도 안전, 디렉토리에 공백 있어도 OK
 HALIAS_STATS_LOG="${STATS_LOG_PATH}"
 _halias_track() {
   # 동기 쓰기 — 한 줄 append는 1ms 미만이라 사용자가 체감 못 함.
   # 백그라운드(&)로 처리하면 zsh가 [job] done 알림을 띄워서 UX가 망가짐.
-  echo "$(date +%s) $1" >> "$HALIAS_STATS_LOG" 2>/dev/null
+  printf '%s\\t%s\\t%s\\n' "$(date +%s)" "$1" "$PWD" >> "$HALIAS_STATS_LOG" 2>/dev/null
 }
 
 # ─── Built-in 메타 명령 ────────────────────────

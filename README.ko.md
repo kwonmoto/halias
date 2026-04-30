@@ -4,7 +4,6 @@
 
 📖 [English README](./README.md) · 한국어
 
-[![CI](https://github.com/hyukjunkwon/halias/actions/workflows/ci.yml/badge.svg)](https://github.com/hyukjunkwon/halias/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/halias.svg)](https://www.npmjs.com/package/halias)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](https://nodejs.org)
@@ -13,6 +12,7 @@
 
 기존 alias 관리는 `~/.zshrc` 를 매번 열어 편집해야 했습니다. **halias** 는 그걸 앱처럼 만들었어요:
 
+- 🎯 **컨텍스트 인식 정렬** — 이 디렉토리에서 자주 쓴 단축키가 검색 상단에. 수동 그룹핑 불필요.
 - ✨ **대화형 추가** (`ha add`) — 입력만으로 안전하게 등록, 미리보기로 안심
 - 🔍 **퍼지 검색** (`ha`) — 이름·명령·태그·설명 모두에 대해 fzf로 즉시 검색
 - 📊 **자동 통계** — 모든 단축키가 wrapper 함수로 생성되어 사용 빈도 자동 추적
@@ -107,14 +107,23 @@ gs() {
 
 `ha` 만 입력하면 모든 단축키를 인터랙티브하게 검색할 수 있어요:
 
-```
+​```
 halias❯ git
-gs        git status                      #git       현재 git 상태
-gp        git pull                        #git,daily 원격 가져오기
-mkcd      mkdir -p "$1" && cd "$1"        #fs        폴더 만들고 이동
-```
+gs    git status         #git    ★ 12회   현재 git 상태
+dev   pnpm dev           #js     ★ 8회    개발 서버 시작
+gp    git pull           #git    34회     원격 가져오기
+mkcd  mkdir -p && cd     #fs              폴더 만들고 이동
+​```
 
 검색은 **이름, 명령 본문, 태그, 설명** 모두에 대해 동작합니다. "폴더" 같은 한국어 설명으로도 매치돼요.
+
+### 컨텍스트 인식 정렬 ⭐
+
+halias 는 단축키를 어느 디렉토리에서 썼는지 자동으로 기록합니다. `ha` 검색 시 **현재 디렉토리에서 자주 쓴 단축키**가 위로 올라오고, `★` 마크로 표시됩니다. 글로벌 빈도가 동률 처리에 사용돼요.
+
+예시: `~/work/myapp` 에 있을 때 — 거기서 8번 쓴 `dev` 가 글로벌로 12번 썼지만 여기선 1번뿐인 `gs` 보다 위로. `~/side/api` 로 옮기면 그곳 패턴에 맞게 순서가 바뀝니다.
+
+즉 **단축키를 수동으로 그룹/태그 분류할 필요가 없습니다** — 사용 패턴 그 자체로 알아서 정렬돼요.
 
 ### fzf 설치 (권장)
 

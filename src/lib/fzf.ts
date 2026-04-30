@@ -26,8 +26,9 @@ export interface FzfOptions {
   withNth?: string;
   /** 검색 대상 필드 (예: '1,2,3' = 1,2,3번 컬럼 모두 검색) */
   nth?: string;
+  /** 추가 fzf 플래그 (예: '--no-sort'). 위 옵션으로 표현 못 하는 fzf 기능용 */
+  extraArgs?: string[];
 }
-
 /**
  * fzf를 자식 프로세스로 실행하고 사용자 선택값을 반환.
  *
@@ -54,6 +55,7 @@ export async function runFzf(
     if (options.delimiter) args.push('--delimiter', options.delimiter);
     if (options.withNth) args.push('--with-nth', options.withNth);
     if (options.nth) args.push('--nth', options.nth);
+    if (options.extraArgs) args.push(...options.extraArgs);
 
     const proc = spawn('fzf', args, {
       stdio: ['pipe', 'pipe', 'inherit'],
