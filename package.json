@@ -1,6 +1,6 @@
 {
   "name": "halias",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Hyper alias — manage shell aliases and functions with an interactive CLI. Search, edit, track usage, and back up — all without touching .zshrc.",
   "type": "module",
   "bin": {
