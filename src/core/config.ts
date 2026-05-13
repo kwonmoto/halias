@@ -4,6 +4,8 @@ import { CONFIG_PATH } from '../lib/paths.js';
 interface HaliasConfig {
   /** 함수 본문 편집에 사용할 에디터 바이너리 (예: 'code', 'vim') */
   editor?: string;
+  /** UI 언어 ('ko' | 'en'). HALIAS_LANG 환경변수가 우선함. */
+  lang?: string;
 }
 
 function readConfig(): HaliasConfig {
@@ -25,4 +27,8 @@ export function getConfiguredEditor(): string | undefined {
 export function saveConfiguredEditor(editor: string): void {
   const config = readConfig();
   writeConfig({ ...config, editor });
+}
+
+export function getConfiguredLang(): string | undefined {
+  return readConfig().lang;
 }

@@ -4,6 +4,7 @@ import { readStore, writeStore } from '../core/store.js';
 import { generateAliasesFile } from '../core/generator.js';
 import { ShortcutSchema, type Shortcut } from '../core/types.js';
 import { editFunctionBody } from '../lib/editor.js';
+import { t } from '../lib/i18n.js';
 
 type ShortcutType = 'alias' | 'function';
 
@@ -28,9 +29,7 @@ export async function runEdit(name?: string): Promise<void> {
 
   if (store.shortcuts.length === 0) {
     console.log(
-      chalk.dim('등록된 단축키가 없습니다. ') +
-        chalk.cyan("'ha add'") +
-        chalk.dim(' 로 시작하세요.'),
+      chalk.dim(t('edit.noShortcuts')),
     );
     return;
   }
@@ -40,20 +39,20 @@ export async function runEdit(name?: string): Promise<void> {
   if (name) {
     target = store.shortcuts.find((s) => s.name === name);
     if (!target) {
-      console.log(chalk.red(`단축키를 찾을 수 없습니다: ${name}`));
+      console.log(chalk.red(t('edit.notFound', { name })));
       return;
     }
   } else {
     const selected = await p.select({
-      message: '편집할 단축키 선택',
+      message: t('edit.selectPrompt'),
       options: store.shortcuts.map((s) => ({
         value: s.name,
         label: s.name,
-        hint: s.type === 'alias' ? s.command : '<function>',
+        hint: s.type === 'alias' ? s.command : t('common.functionLabel'),
       })),
     });
     if (p.isCancel(selected)) {
-      p.cancel('취소되었습니다.');
+      p.cancel(t('edit.cancelled'));
       return;
     }
     target = store.shortcuts.find((s) => s.name === selected);
@@ -63,7 +62,7 @@ export async function runEdit(name?: string): Promise<void> {
   // 2. 폼 — 이름/종류/설명/태그 (command는 별도 처리)
   console.clear();
   p.intro(
-    chalk.bgCyan.black(' halias · 단축키 편집 ') +
+    chalk.bgCyan.black(t('edit.intro')) +
       chalk.dim(`  ${target.name}`),
   );
 
@@ -75,44 +74,44 @@ export async function runEdit(name?: string): Promise<void> {
     {
       name: () =>
         p.text({
-          message: '이름',
+          message: t('edit.nameField'),
           initialValue: target!.name,
           validate: (value) => {
-            if (!value) return '이름을 입력해주세요';
-            if (otherNames.has(value)) return `이미 존재하는 다른 단축키: ${value}`;
+            if (!value) return t('edit.validateEmpty');
+            if (otherNames.has(value)) return t('edit.validateDuplicate', { name: value });
             const parsed = ShortcutSchema.shape.name.safeParse(value);
-            if (!parsed.success) return parsed.error.issues[0]?.message ?? '잘못된 형식';
+            if (!parsed.success) return parsed.error.issues[0]?.message ?? t('edit.validateBadFormat');
             return undefined;
           },
         }),
 
       type: () =>
         p.select({
-          message: '종류',
+          message: t('edit.typeField'),
           options: [
-            { value: 'alias', label: 'alias', hint: '단순 명령어 치환' },
-            { value: 'function', label: 'function', hint: '인자 가공 가능' },
+            { value: 'alias', label: 'alias', hint: t('edit.typeAliasHint') },
+            { value: 'function', label: 'function', hint: t('edit.typeFunctionHint') },
           ] as const,
           initialValue: target!.type,
         }),
 
       description: () =>
         p.text({
-          message: '설명 (선택)',
+          message: t('edit.descField'),
           initialValue: target!.description ?? '',
-          placeholder: '엔터로 건너뛰기',
+          placeholder: t('edit.descPlaceholder'),
         }),
 
       tags: () =>
         p.text({
-          message: '태그 (쉼표 구분)',
+          message: t('edit.tagsField'),
           initialValue: target!.tags.join(', '),
-          placeholder: 'git, daily',
+          placeholder: t('edit.tagsPlaceholder'),
         }),
     },
     {
       onCancel: () => {
-        p.cancel('취소되었습니다.');
+        p.cancel(t('edit.cancelled'));
         process.exit(0);
       },
     },
@@ -124,26 +123,26 @@ export async function runEdit(name?: string): Promise<void> {
     : await editInline(target.command, meta.type);
 
   if (newCommand === null) {
-    p.cancel('취소되었습니다.');
+    p.cancel(t('edit.cancelled'));
     return;
   }
 
   // 4. 변경 사항 요약
   const changes = diffShortcut(target, meta, newCommand);
   if (changes.length === 0) {
-    p.outro(chalk.dim('변경된 내용이 없습니다.'));
+    p.outro(chalk.dim(t('edit.noChanges')));
     return;
   }
 
-  p.note(changes.join('\n'), '변경 사항');
+  p.note(changes.join('\n'), t('edit.changesNote'));
 
   const confirm = await p.confirm({
-    message: '저장할까요?',
+    message: t('edit.saveConfirm'),
     initialValue: true,
   });
 
   if (p.isCancel(confirm) || !confirm) {
-    p.cancel('취소되었습니다.');
+    p.cancel(t('edit.cancelled'));
     return;
   }
 
@@ -155,7 +154,7 @@ export async function runEdit(name?: string): Promise<void> {
     description: meta.description || undefined,
     tags: meta.tags
       .split(',')
-      .map((t) => t.trim())
+      .map((tag) => tag.trim())
       .filter(Boolean),
     source: target.source,
     createdAt: target.createdAt,
@@ -169,10 +168,10 @@ export async function runEdit(name?: string): Promise<void> {
   await generateAliasesFile(store);
 
   p.outro(
-    chalk.green(`✓ ${updated.name} 수정됨`) +
+    chalk.green(`✓ ${updated.name} ${t('edit.outroDone')}`) +
       '\n\n  ' +
-      chalk.dim('현재 셸에 즉시 반영하려면: ') +
-      chalk.cyan('hareload'),
+      chalk.dim(t('edit.outroReloadHint')) +
+      chalk.cyan(t('common.hareload')),
   );
 }
 
@@ -182,9 +181,9 @@ export async function runEdit(name?: string): Promise<void> {
  */
 async function editInline(current: string, _type: ShortcutType): Promise<string | null> {
   const result = await p.text({
-    message: '실행할 명령어',
+    message: t('edit.commandField'),
     initialValue: current,
-    validate: (v) => (v ? undefined : '명령어를 입력해주세요'),
+    validate: (v) => (v ? undefined : t('edit.commandRequired')),
   });
   if (p.isCancel(result)) return null;
   return result as string;
@@ -198,26 +197,26 @@ function diffShortcut(before: Shortcut, after: MetaFormResult, newCommand: strin
   const dim = chalk.dim;
 
   if (before.name !== after.name) {
-    lines.push(`${dim('이름:')}  ${before.name} → ${chalk.cyan(after.name)}`);
+    lines.push(`${dim(t('edit.diffName'))}  ${before.name} → ${chalk.cyan(after.name)}`);
   }
   if (before.type !== after.type) {
-    lines.push(`${dim('종류:')}  ${before.type} → ${chalk.cyan(after.type)}`);
+    lines.push(`${dim(t('edit.diffType'))}  ${before.type} → ${chalk.cyan(after.type)}`);
   }
   if (before.command !== newCommand) {
-    lines.push(`${dim('명령:')}  변경됨`);
+    lines.push(`${dim(t('edit.diffCommand'))}  ${t('edit.diffCommandChanged')}`);
   }
   const beforeDesc = before.description ?? '';
   if (beforeDesc !== after.description) {
-    lines.push(`${dim('설명:')}  ${beforeDesc || '(없음)'} → ${after.description || '(없음)'}`);
+    lines.push(`${dim(t('edit.diffDesc'))}  ${beforeDesc || t('edit.diffDescEmpty')} → ${after.description || t('edit.diffDescEmpty')}`);
   }
   const beforeTags = before.tags.join(', ');
   const afterTags = after.tags
     .split(',')
-    .map((t) => t.trim())
+    .map((tag) => tag.trim())
     .filter(Boolean)
     .join(', ');
   if (beforeTags !== afterTags) {
-    lines.push(`${dim('태그:')}  ${beforeTags || '(없음)'} → ${afterTags || '(없음)'}`);
+    lines.push(`${dim(t('edit.diffTags'))}  ${beforeTags || t('edit.diffTagsEmpty')} → ${afterTags || t('edit.diffTagsEmpty')}`);
   }
 
   return lines;

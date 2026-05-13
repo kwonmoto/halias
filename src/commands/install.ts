@@ -7,6 +7,7 @@ import { ALIASES_OUTPUT } from '../lib/paths.js';
 import { generateAliasesFile } from '../core/generator.js';
 import { readStore } from '../core/store.js';
 import { completionSourceLine, type Shell } from './completion.js';
+import { t } from '../lib/i18n.js';
 
 const HALIAS_MARKER = '# >>> halias shortcuts >>>';
 const HALIAS_END_MARKER = '# <<< halias shortcuts <<<';
@@ -25,7 +26,7 @@ function detectRcFile(): string {
 
 export async function runInstall(): Promise<void> {
   const rcFile = detectRcFile();
-  p.intro(chalk.bgCyan.black(' halias · 셸 통합 '));
+  p.intro(chalk.bgCyan.black(t('install.intro')));
 
   // 우선 generated/aliases.sh 가 존재하도록 한 번 생성
   const store = await readStore();
@@ -39,7 +40,7 @@ export async function runInstall(): Promise<void> {
   }
 
   if (rcContent.includes(HALIAS_MARKER)) {
-    p.outro(chalk.dim(`이미 ${rcFile} 에 설치되어 있습니다.`));
+    p.outro(chalk.dim(t('install.alreadyInstalled', { file: rcFile })));
     return;
   }
 
@@ -52,33 +53,33 @@ export async function runInstall(): Promise<void> {
   ].join('\n');
 
   const confirm = await p.confirm({
-    message: `${rcFile} 에 다음을 추가합니다. 진행할까요?\n${chalk.dim(block.trim())}`,
+    message: t('install.confirmAdd', { file: rcFile }) + chalk.dim(block.trim()),
     initialValue: true,
   });
 
   if (p.isCancel(confirm) || !confirm) {
-    p.cancel('취소되었습니다.');
+    p.cancel(t('install.cancelled'));
     return;
   }
 
   await fs.appendFile(rcFile, block, 'utf-8');
-  p.log.success('셸 통합 설치 완료.');
+  p.log.success(t('install.done'));
 
   // completion 설정
   const rcContentAfter = await fs.readFile(rcFile, 'utf-8');
   if (!rcContentAfter.includes(HALIAS_COMPLETION_MARKER)) {
     const shell = rcFile.includes('zsh') ? 'zsh' : 'bash';
     const completionConfirm = await p.confirm({
-      message: `셸 자동완성도 설정할까요? (${chalk.cyan(`ha <tab>`)} 으로 명령어·단축키 완성)`,
+      message: t('install.completionConfirm', { hint: `ha <tab>` }),
       initialValue: true,
     });
 
     if (!p.isCancel(completionConfirm) && completionConfirm) {
       const completionBlock = `\n${HALIAS_COMPLETION_MARKER}\n${completionSourceLine(shell as Shell)}\n`;
       await fs.appendFile(rcFile, completionBlock, 'utf-8');
-      p.log.success('자동완성 설정 완료.');
+      p.log.success(t('install.completionDone'));
     }
   }
 
-  p.outro(chalk.dim(`새 터미널을 열거나 source ${rcFile} 로 적용하세요.`));
+  p.outro(chalk.dim(t('install.outroHint', { file: rcFile })));
 }

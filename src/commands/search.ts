@@ -4,6 +4,7 @@ import { readStore } from '../core/store.js';
 import { isFzfAvailable, runFzf } from '../lib/fzf.js';
 import { scoreShortcutsForDirectory, type ScoredShortcut } from '../core/stats.js';
 import type { Shortcut } from '../core/types.js';
+import { t } from '../lib/i18n.js';
 
 /**
  * ha 인자 없이 실행 시 호출되는 검색 진입점.
@@ -18,9 +19,7 @@ export async function runSearch(): Promise<void> {
 
   if (store.shortcuts.length === 0) {
     console.log(
-      chalk.dim('등록된 단축키가 없습니다. ') +
-        chalk.cyan("'ha add'") +
-        chalk.dim(' 로 시작하세요.'),
+      chalk.dim(t('search.noShortcuts')),
     );
     return;
   }
@@ -96,8 +95,8 @@ async function searchWithFzf(
   });
 
   const result = await runFzf(lines.join('\n'), {
-    prompt: 'halias❯ ',
-    header: `단축키 ${shortcuts.length}개 · ★ = 현재 디렉토리에서 사용 · Esc 취소`,
+    prompt: t('search.fzfPrompt'),
+    header: t('search.fzfHeader', { count: shortcuts.length }),
     // --no-sort 로 외부 정렬(점수순) 유지 — fzf 가 자체 정렬 못 하게.
     extraArgs: ['--no-sort'],
   });
@@ -116,10 +115,10 @@ async function searchWithFzf(
 function formatUsageHint(scored: ScoredShortcut | undefined): string {
   if (!scored) return '';
   if (scored.contextCount > 0) {
-    return `★ ${scored.contextCount}회`;
+    return t('search.usageCountContext', { count: scored.contextCount });
   }
   if (scored.globalCount > 0) {
-    return `${scored.globalCount}회`;
+    return t('search.usageCountGlobal', { count: scored.globalCount });
   }
   return '';
 }
@@ -129,14 +128,14 @@ async function searchWithClack(
   scoreMap: Map<string, ScoredShortcut>,
 ): Promise<string | null> {
   console.log(
-    chalk.dim('ℹ fzf가 설치되어 있지 않아 단순 선택 모드로 실행합니다.\n  더 나은 검색을 원하시면: ') +
+    chalk.dim(t('search.clackFallbackHint')) +
       chalk.cyan('ha doctor') +
-      chalk.dim(' 로 설치 안내를 확인하세요.\n  취소하려면 Ctrl+C 를 누르세요.'),
+      chalk.dim(t('search.clackFallbackHint2')),
   );
   console.log();
 
   const selected = await p.select({
-    message: '단축키 선택',
+    message: t('search.clackSelectPrompt'),
     options: shortcuts.map((s) => {
       const usage = formatUsageHint(scoreMap.get(s.name));
       const cmd = summarizeCommand(s);
@@ -168,22 +167,22 @@ function printShortcutInfo(s: Shortcut): void {
   console.log();
 
   if (s.type === 'alias') {
-    console.log('  ' + chalk.dim('명령:') + '  ' + s.command);
+    console.log('  ' + chalk.dim(t('search.infoCommand')) + '  ' + s.command);
   } else {
-    console.log('  ' + chalk.dim('함수 본문:'));
+    console.log('  ' + chalk.dim(t('search.infoFunctionBody')));
     s.command.split('\n').forEach((line) => {
       console.log('    ' + chalk.green(line));
     });
   }
 
   if (s.tags.length > 0) {
-    console.log('  ' + chalk.dim('태그:') + '  ' + s.tags.join(', '));
+    console.log('  ' + chalk.dim(t('search.infoTags')) + '  ' + s.tags.join(', '));
   }
 
-  console.log('  ' + chalk.dim('출처:') + '  ' + s.source);
+  console.log('  ' + chalk.dim(t('search.infoSource')) + '  ' + s.source);
   console.log();
   console.log(
-    '  ' + chalk.dim('사용:') + '  ' + chalk.cyan(s.name) + chalk.dim(' (셸에서 직접 입력)'),
+    '  ' + chalk.dim(t('search.infoUsage')) + '  ' + chalk.cyan(s.name) + chalk.dim(` ${t('search.infoUsageHint')}`),
   );
   console.log();
 }

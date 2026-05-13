@@ -8,6 +8,7 @@
  */
 import { Command } from 'commander';
 import chalk from 'chalk';
+import { initLocale, t } from './lib/i18n.js';
 import { runAdd } from './commands/add.js';
 import { runList } from './commands/list.js';
 import { runInstall } from './commands/install.js';
@@ -20,6 +21,8 @@ import { runExport, runImport } from './commands/export-import.js';
 import { runSuggest } from './commands/suggest.js';
 import { runRename } from './commands/rename.js';
 import { runCompletion } from './commands/completion.js';
+
+initLocale();
 
 const program = new Command();
 
@@ -149,6 +152,6 @@ program
   });
 
 program.parseAsync().catch((err) => {
-  console.error(chalk.red('오류: ') + (err instanceof Error ? err.message : String(err)));
+  console.error(chalk.red(t('cli.error')) + (err instanceof Error ? err.message : String(err)));
   process.exit(1);
 });

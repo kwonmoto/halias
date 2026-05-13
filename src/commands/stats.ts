@@ -4,6 +4,7 @@ import { aggregateStats } from '../core/stats.js';
 import { readStore, writeStore } from '../core/store.js';
 import { generateAliasesFile } from '../core/generator.js';
 import type { Shortcut } from '../core/types.js';
+import { t } from '../lib/i18n.js';
 
 export interface StatsOptions {
   /** 안 쓰는 단축키 모드 */
@@ -41,17 +42,17 @@ export async function runStats(options: StatsOptions = {}): Promise<void> {
   }
 
   if (store.shortcuts.length === 0) {
-    console.log(chalk.dim('등록된 단축키가 없습니다.'));
+    console.log(chalk.dim(t('stats.noShortcuts')));
     return;
   }
 
   if (agg.totalCalls === 0) {
     console.log();
-    console.log(chalk.dim('  아직 사용 기록이 없습니다.'));
+    console.log(chalk.dim(`  ${t('stats.noUsage')}`));
     console.log(
-      chalk.dim('  단축키를 사용하면 자동으로 기록됩니다 (예: ') +
+      chalk.dim(`  ${t('stats.noUsageHint')}`) +
         chalk.cyan('gs') +
-        chalk.dim(' 입력 시).'),
+        chalk.dim(t('stats.noUsageHint2')),
     );
     console.log();
     return;
@@ -67,11 +68,11 @@ function printTop(
 ): void {
   console.log();
   const periodLabel = since
-    ? `${formatRelative(since)} 이후`
+    ? t('stats.periodSince', { date: formatRelative(since) })
     : agg.firstSeen
-      ? `${formatRelative(agg.firstSeen)}부터`
-      : '전체 기간';
-  console.log(chalk.bold(`  사용 통계  ${chalk.dim(`(${periodLabel} · 총 ${agg.totalCalls}회)`)}`));
+      ? t('stats.periodFrom', { date: formatRelative(agg.firstSeen) })
+      : t('stats.periodAll');
+  console.log(chalk.bold(`  ${t('stats.header')}  ${chalk.dim(`(${periodLabel} · ${t('stats.periodTotal', { count: agg.totalCalls })})`)}`));
   console.log();
 
   const top = agg.byShortcut.slice(0, topN);
@@ -84,7 +85,7 @@ function printTop(
     const count = chalk.bold(entry.count.toString().padStart(5));
     const bar = renderBar(entry.count, maxCount, 20);
     const lastUsed = entry.lastUsed
-      ? chalk.dim(`  마지막: ${formatRelative(entry.lastUsed)}`)
+      ? chalk.dim(`  ${t('stats.lastUsed', { date: formatRelative(entry.lastUsed) })}`)
       : '';
     console.log(`  ${rank}  ${name}  ${count}  ${bar}${lastUsed}`);
   }
@@ -110,7 +111,7 @@ async function printUnused(
   console.log();
 
   if (neverUsed.length === 0 && staleEntries.length === 0) {
-    console.log(chalk.green('  ✓ 모든 단축키가 활발히 사용되고 있습니다.'));
+    console.log(chalk.green(`  ✓ ${t('stats.allActive')}`));
     console.log();
     return;
   }
@@ -122,31 +123,37 @@ async function printUnused(
   );
 
   if (neverUsed.length > 0) {
-    console.log(chalk.bold(`  한 번도 안 쓴 단축키 (${neverUsed.length}개)`));
+    console.log(chalk.bold(`  ${t('stats.neverUsed', { count: neverUsed.length })}`));
     console.log();
     for (const s of neverUsed) {
       const name = chalk.yellow(s.name.padEnd(maxNameLen));
       const cmd = chalk.dim(truncate(s.command, 40));
-      const created = chalk.dim(`등록: ${formatRelative(new Date(s.createdAt))}`);
+      const created = chalk.dim(t('stats.neverUsedCreated', { date: formatRelative(new Date(s.createdAt)) }));
       console.log(`    ${chalk.dim('•')} ${name}  ${cmd}  ${created}`);
     }
     console.log();
   }
 
   if (staleEntries.length > 0) {
-    console.log(chalk.bold(`  30일 이상 미사용 (${staleEntries.length}개)`));
+    console.log(chalk.bold(`  ${t('stats.stale', { count: staleEntries.length })}`));
     console.log();
     for (const e of staleEntries) {
       const name = chalk.yellow(e.shortcut.name.padEnd(maxNameLen));
       const cmd = chalk.dim(truncate(e.shortcut.command, 40));
-      const last = chalk.dim(`마지막: ${formatRelative(e.lastUsed)}`);
+      const last = chalk.dim(t('stats.staleLastUsed', { date: formatRelative(e.lastUsed) }));
       console.log(`    ${chalk.dim('•')} ${name}  ${cmd}  ${last}`);
     }
     console.log();
   }
 
   const total = neverUsed.length + staleEntries.length;
-  console.log(chalk.dim(`  정리하려면: `) + chalk.cyan('ha rm <name>') + chalk.dim(`  또는  `) + chalk.cyan(`ha unused --clean`) + chalk.dim(`  (${total}개 일괄 정리)`));
+  console.log(
+    chalk.dim(`  ${t('stats.cleanHint')}`) +
+    chalk.cyan('ha rm <name>') +
+    chalk.dim(t('stats.cleanHint2')) +
+    chalk.cyan('ha unused --clean') +
+    chalk.dim(t('stats.cleanHint3', { count: total })),
+  );
   console.log();
 }
 
@@ -158,8 +165,8 @@ async function runClean(
   store: { shortcuts: Shortcut[]; version: 1 },
 ): Promise<void> {
   if (!process.stdin.isTTY) {
-    console.log(chalk.yellow('  --clean 은 대화형 터미널에서 실행해야 합니다.'));
-    console.log(chalk.dim('  iTerm, Terminal.app 등에서 ') + chalk.cyan('ha unused --clean') + chalk.dim(' 을 실행하세요.'));
+    console.log(chalk.yellow(`  ${t('stats.cleanNotTTY')}`));
+    console.log(chalk.dim(`  ${t('stats.cleanNotTTYHint')}`) + chalk.cyan('ha unused --clean') + chalk.dim(t('stats.cleanNotTTYHint2')));
     return;
   }
 
@@ -176,50 +183,50 @@ async function runClean(
     .filter((e): e is { shortcut: Shortcut; lastUsed: Date } => e.shortcut !== undefined && e.lastUsed !== null);
 
   const candidates = [
-    ...neverUsed.map((s) => ({ shortcut: s, reason: '미사용' as const })),
-    ...staleEntries.map((e) => ({ shortcut: e.shortcut, reason: '장기미사용' as const })),
+    ...neverUsed.map((s) => ({ shortcut: s, reason: 'never' as const })),
+    ...staleEntries.map((e) => ({ shortcut: e.shortcut, reason: 'stale' as const })),
   ];
 
   if (candidates.length === 0) {
     console.log();
-    console.log(chalk.green('  ✓ 정리할 단축키가 없습니다.'));
+    console.log(chalk.green(`  ✓ ${t('stats.cleanNoItems')}`));
     console.log();
     return;
   }
 
   console.log();
-  p.intro(chalk.bgYellow.black(' halias · 미사용 단축키 정리 '));
+  p.intro(chalk.bgYellow.black(t('stats.cleanIntro')));
 
   const options = candidates.map((c) => ({
     value: c.shortcut.name,
     label: c.shortcut.name,
-    hint: `${c.reason === '미사용' ? '한 번도 안 씀' : '30일 이상 미사용'}  ${truncate(c.shortcut.command, 35)}`,
+    hint: `${c.reason === 'never' ? t('stats.cleanNeverUsedHint') : t('stats.cleanStaleHint')}  ${truncate(c.shortcut.command, 35)}`,
   }));
 
   const selected = await p.multiselect({
-    message: '삭제할 단축키 선택 (스페이스: 선택, 엔터: 확인)',
+    message: t('stats.cleanSelectPrompt'),
     options,
     required: false,
   });
 
   if (p.isCancel(selected)) {
-    p.cancel('취소되었습니다.');
+    p.cancel(t('stats.cancelled'));
     return;
   }
 
   const names = selected as string[];
   if (names.length === 0) {
-    p.outro(chalk.dim('선택된 항목이 없습니다.'));
+    p.outro(chalk.dim(t('stats.cleanNoneSelected')));
     return;
   }
 
   const confirm = await p.confirm({
-    message: `${names.length}개를 삭제할까요?`,
+    message: t('stats.cleanConfirm', { count: names.length }),
     initialValue: false,
   });
 
   if (p.isCancel(confirm) || !confirm) {
-    p.cancel('취소되었습니다.');
+    p.cancel(t('stats.cancelled'));
     return;
   }
 
@@ -229,10 +236,10 @@ async function runClean(
   await generateAliasesFile(store);
 
   p.outro(
-    chalk.green(`✓ ${names.length}개 삭제됨`) +
+    chalk.green(`✓ ${t('stats.cleanDone', { count: names.length })}`) +
       '\n\n  ' +
-      chalk.dim('현재 셸에 반영하려면: ') +
-      chalk.cyan('hareload'),
+      chalk.dim(t('stats.cleanReloadHint')) +
+      chalk.cyan(t('common.hareload')),
   );
 }
 
@@ -255,13 +262,13 @@ function formatRelative(date: Date): string {
   const diffHour = Math.floor(diffMin / 60);
   const diffDay = Math.floor(diffHour / 24);
 
-  if (diffSec < 60) return '방금 전';
-  if (diffMin < 60) return `${diffMin}분 전`;
-  if (diffHour < 24) return `${diffHour}시간 전`;
-  if (diffDay < 30) return `${diffDay}일 전`;
+  if (diffSec < 60) return t('stats.timeJustNow');
+  if (diffMin < 60) return t('stats.timeMinutes', { n: diffMin });
+  if (diffHour < 24) return t('stats.timeHours', { n: diffHour });
+  if (diffDay < 30) return t('stats.timeDays', { n: diffDay });
   const diffMonth = Math.floor(diffDay / 30);
-  if (diffMonth < 12) return `${diffMonth}개월 전`;
-  return `${Math.floor(diffMonth / 12)}년 전`;
+  if (diffMonth < 12) return t('stats.timeMonths', { n: diffMonth });
+  return t('stats.timeYears', { n: Math.floor(diffMonth / 12) });
 }
 
 /** 문자열을 maxLen 이하로 자름. 초과 시 '…' 붙임. */

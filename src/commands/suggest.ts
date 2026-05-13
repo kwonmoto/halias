@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import { runAddFromCommand } from './add.js';
 import { readStore } from '../core/store.js';
 import { readShellHistoryCommands } from '../lib/shell-history.js';
+import { t } from '../lib/i18n.js';
 
 interface SuggestOptions {
   top?: string;
@@ -45,8 +46,8 @@ export async function runSuggest(options: SuggestOptions = {}): Promise<void> {
   console.log();
 
   if (suggestions.length === 0) {
-    console.log(chalk.dim('  아직 추천할 반복 명령이 없습니다.'));
-    console.log(chalk.dim('  긴 명령을 몇 번 더 사용한 뒤 ') + chalk.cyan('ha suggest') + chalk.dim(' 를 다시 실행해보세요.'));
+    console.log(chalk.dim(`  ${t('suggest.noSuggestions')}`));
+    console.log(chalk.dim(`  ${t('suggest.noSuggestionsHint')}`) + chalk.cyan('ha suggest') + chalk.dim(t('suggest.noSuggestionsHint2')));
     console.log();
     return;
   }
@@ -54,8 +55,8 @@ export async function runSuggest(options: SuggestOptions = {}): Promise<void> {
   const maxCount = Math.max(...suggestions.map((suggestion) => suggestion.count));
   const maxCountWidth = maxCount.toString().length;
 
-  console.log(chalk.bold('  단축키 후보'));
-  console.log(chalk.dim(`  최근 셸 history에서 ${minCount}회 이상 반복된 명령입니다.`));
+  console.log(chalk.bold(`  ${t('suggest.header')}`));
+  console.log(chalk.dim(`  ${t('suggest.subHeader', { min: minCount })}`));
   console.log();
 
   for (const [index, suggestion] of suggestions.entries()) {
@@ -65,21 +66,21 @@ export async function runSuggest(options: SuggestOptions = {}): Promise<void> {
   }
 
   console.log();
-  console.log(chalk.dim('  저장하려면: ') + chalk.cyan('ha suggest --save'));
+  console.log(chalk.dim(`  ${t('suggest.saveHint')}`) + chalk.cyan('ha suggest --save'));
   console.log();
 }
 
 async function selectAndSaveSuggestion(suggestions: Suggestion[], minCount: number): Promise<void> {
   console.clear();
-  p.intro(chalk.bgCyan.black(' halias · 추천 후보 저장 '));
+  p.intro(chalk.bgCyan.black(t('suggest.intro')));
 
   if (suggestions.length === 0) {
-    p.cancel(`최근 셸 history에서 ${minCount}회 이상 반복된 추천 후보가 없습니다.`);
+    p.cancel(t('suggest.noSuggestionsForSave', { min: minCount }));
     return;
   }
 
   const selected = await p.select({
-    message: '어떤 명령을 단축키로 저장할까요?',
+    message: t('suggest.selectPrompt'),
     options: suggestions.map((suggestion) => ({
       value: suggestion.command,
       label: suggestion.command,
@@ -88,11 +89,11 @@ async function selectAndSaveSuggestion(suggestions: Suggestion[], minCount: numb
   });
 
   if (p.isCancel(selected)) {
-    p.cancel('취소되었습니다.');
+    p.cancel(t('suggest.cancelled'));
     return;
   }
 
-  await runAddFromCommand(undefined, String(selected), '선택한 후보 명령');
+  await runAddFromCommand(undefined, String(selected), t('add.selectedCommandNote'));
 }
 
 function collectSuggestions(

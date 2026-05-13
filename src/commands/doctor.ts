@@ -10,6 +10,7 @@ import { inspectShellHistory } from '../lib/shell-history.js';
 import { detectSystemCommandConflict } from '../lib/system-commands.js';
 import { readStore } from '../core/store.js';
 import { ALIASES_OUTPUT } from '../lib/paths.js';
+import { t } from '../lib/i18n.js';
 
 interface CheckResult {
   level: 'ok' | 'warn' | 'error' | 'info';
@@ -31,7 +32,7 @@ interface CheckResult {
  */
 export async function runDoctor(): Promise<void> {
   console.log();
-  console.log(chalk.bold('halias 환경 점검'));
+  console.log(chalk.bold(t('doctor.title')));
   console.log();
 
   const checks: CheckResult[] = [];
@@ -56,13 +57,13 @@ export async function runDoctor(): Promise<void> {
 
 async function checkFzf(): Promise<CheckResult> {
   if (isFzfAvailable()) {
-    return { level: 'ok', message: 'fzf 설치됨' };
+    return { level: 'ok', message: t('doctor.fzfOk') };
   }
   return {
     level: 'warn',
-    message: 'fzf 미설치',
-    detail: '퍼지 검색이 단순 선택 모드로 폴백됩니다.',
-    fix: '아래에서 자동 설치를 진행하거나 수동으로 설치하세요.',
+    message: t('doctor.fzfWarn'),
+    detail: t('doctor.fzfWarnDetail'),
+    fix: t('doctor.fzfWarnFix'),
   };
 }
 
@@ -80,7 +81,7 @@ async function checkShellIntegration(): Promise<CheckResult> {
       if (content.includes('# >>> halias shortcuts >>>')) {
         return {
           level: 'ok',
-          message: `셸 통합 설치됨 (${path.basename(file)})`,
+          message: t('doctor.shellIntegrationOk', { file: path.basename(file) }),
         };
       }
     } catch {
@@ -90,9 +91,9 @@ async function checkShellIntegration(): Promise<CheckResult> {
 
   return {
     level: 'warn',
-    message: '셸 통합 미설치',
-    detail: '단축키가 셸에 등록되지 않아 사용할 수 없습니다.',
-    fix: 'ha install 을 실행하세요.',
+    message: t('doctor.shellIntegrationWarn'),
+    detail: t('doctor.shellIntegrationWarnDetail'),
+    fix: t('doctor.shellIntegrationWarnFix'),
   };
 }
 
@@ -103,22 +104,22 @@ async function checkShellHistory(): Promise<CheckResult> {
   if (readable.length === 0) {
     const attempted = diagnostics.files.length > 0
       ? diagnostics.files.map((file) => `  • ${file.path}`).join('\n')
-      : '  • history 파일 후보 없음';
+      : t('doctor.shellHistoryNoCandidates');
 
     return {
       level: 'warn',
-      message: '셸 history 접근 불가',
+      message: t('doctor.shellHistoryNoFile'),
       detail: attempted,
-      fix: 'HISTFILE 설정 또는 ~/.zsh_history / ~/.bash_history 권한을 확인하세요.',
+      fix: t('doctor.shellHistoryNoFileFix'),
     };
   }
 
   if (diagnostics.commands.length === 0) {
     return {
       level: 'warn',
-      message: '셸 history 명령 없음',
+      message: t('doctor.shellHistoryEmpty'),
       detail: readable.map((file) => `  • ${path.basename(file.path)} 읽음 (0개)`).join('\n'),
-      fix: '명령을 몇 번 실행한 뒤 ha add --last 또는 ha suggest 를 다시 사용하세요.',
+      fix: t('doctor.shellHistoryEmptyFix'),
     };
   }
 
@@ -128,7 +129,7 @@ async function checkShellHistory(): Promise<CheckResult> {
 
   return {
     level: 'ok',
-    message: `셸 history 사용 가능 (${diagnostics.commands.length}개 최근 명령)`,
+    message: t('doctor.shellHistoryOk', { count: diagnostics.commands.length }),
     detail,
   };
 }
@@ -138,14 +139,14 @@ async function checkStoreIntegrity(): Promise<CheckResult> {
     const store = await readStore();
     return {
       level: 'ok',
-      message: `shortcuts.json 무결성 정상 (${store.shortcuts.length}개)`,
+      message: t('doctor.storeOk', { count: store.shortcuts.length }),
     };
   } catch (err) {
     return {
       level: 'error',
-      message: 'shortcuts.json 손상',
+      message: t('doctor.storeError'),
       detail: err instanceof Error ? err.message : String(err),
-      fix: '백업이 있다면 ha import 로 복구하세요. 없다면 직접 ~/.halias/shortcuts.json 을 점검해야 합니다.',
+      fix: t('doctor.storeErrorFix'),
     };
   }
 }
@@ -163,15 +164,15 @@ async function checkDangerousShortcuts(): Promise<CheckResult[]> {
     .filter((x) => x.conflict.conflict);
 
   if (dangerous.length === 0) {
-    return [{ level: 'ok', message: '위험한 단축키 없음' }];
+    return [{ level: 'ok', message: t('doctor.dangerousNone') }];
   }
 
   return [
     {
       level: 'warn',
-      message: `시스템 명령어를 덮어씌우는 단축키 ${dangerous.length}개`,
+      message: t('doctor.dangerousFound', { count: dangerous.length }),
       detail: dangerous.map((d) => `  • ${chalk.yellow(d.name)}`).join('\n'),
-      fix: '의도한 것이 아니라면 ha rm <name> 으로 삭제하세요.',
+      fix: t('doctor.dangerousFoundFix'),
     },
   ];
 }
@@ -179,13 +180,13 @@ async function checkDangerousShortcuts(): Promise<CheckResult[]> {
 async function checkGeneratedFile(): Promise<CheckResult> {
   try {
     await fs.access(ALIASES_OUTPUT);
-    return { level: 'ok', message: 'aliases.sh 생성됨' };
+    return { level: 'ok', message: t('doctor.aliasesOk') };
   } catch {
     return {
       level: 'warn',
-      message: 'aliases.sh 미생성',
-      detail: '단축키를 추가했거나 ha install 후에는 자동 생성되어야 합니다.',
-      fix: 'ha install 을 다시 실행하세요.',
+      message: t('doctor.aliasesWarn'),
+      detail: t('doctor.aliasesWarnDetail'),
+      fix: t('doctor.aliasesWarnFix'),
     };
   }
 }
@@ -220,11 +221,11 @@ function printChecks(checks: CheckResult[]): void {
   const warns = checks.filter((c) => c.level === 'warn').length;
 
   if (errors === 0 && warns === 0) {
-    console.log(chalk.green('  모든 항목 정상.'));
+    console.log(chalk.green(`  ${t('doctor.summaryOk')}`));
   } else {
     const summary = [];
-    if (errors > 0) summary.push(chalk.red(`오류 ${errors}개`));
-    if (warns > 0) summary.push(chalk.yellow(`경고 ${warns}개`));
+    if (errors > 0) summary.push(chalk.red(t('doctor.summaryErrors', { count: errors })));
+    if (warns > 0) summary.push(chalk.yellow(t('doctor.summaryWarnings', { count: warns })));
     console.log('  ' + summary.join(', ') + ' 발견');
   }
 }
@@ -236,53 +237,53 @@ async function offerFzfInstall(): Promise<void> {
   const pm = detectPackageManager();
 
   if (!pm) {
-    console.log(chalk.bold('  fzf 설치 방법:'));
+    console.log(chalk.bold(`  ${t('doctor.fzfInstallTitle')}`));
     if (platform === 'macos') {
-      console.log('    ' + chalk.cyan('brew install fzf'));
+      console.log('    ' + chalk.cyan(t('doctor.fzfBrewCmd')));
     } else if (platform === 'linux') {
-      console.log('    ' + chalk.cyan('sudo apt install fzf') + chalk.dim('  # Debian/Ubuntu'));
-      console.log('    ' + chalk.cyan('sudo dnf install fzf') + chalk.dim('  # Fedora/RHEL'));
+      console.log('    ' + chalk.cyan(t('doctor.fzfAptCmd')) + chalk.dim(`  # ${t('doctor.fzfAptHint')}`));
+      console.log('    ' + chalk.cyan(t('doctor.fzfDnfCmd')) + chalk.dim(`  # ${t('doctor.fzfDnfHint')}`));
     } else if (platform === 'windows') {
-      console.log('    ' + chalk.cyan('winget install fzf'));
+      console.log('    ' + chalk.cyan(t('doctor.fzfWingetCmd')));
     } else {
-      console.log('    ' + chalk.dim('https://github.com/junegunn/fzf#installation'));
+      console.log('    ' + chalk.dim(t('doctor.fzfManualUrl')));
     }
     return;
   }
 
   const command = pm.install('fzf');
-  console.log('  ' + chalk.dim(`감지된 패키지 매니저: ${pm.name}`));
-  console.log('  ' + chalk.dim('실행할 명령어: ') + chalk.cyan(command));
+  console.log('  ' + chalk.dim(t('doctor.fzfDetectedPm', { pm: pm.name })));
+  console.log('  ' + chalk.dim(t('doctor.fzfRunCmd')) + chalk.cyan(command));
   console.log();
 
   if (!pm.autoSafe) {
     console.log(
       chalk.dim('  ') +
-        chalk.yellow('sudo 권한이 필요해 자동 실행하지 않습니다.') +
-        chalk.dim(' 위 명령어를 직접 실행해주세요.'),
+        chalk.yellow(t('doctor.fzfSudoRequired')) +
+        chalk.dim(t('doctor.fzfSudoRequiredHint')),
     );
     return;
   }
 
   const proceed = await p.confirm({
-    message: '지금 자동으로 설치할까요?',
+    message: t('doctor.fzfInstallConfirm'),
     initialValue: true,
   });
 
   if (p.isCancel(proceed) || !proceed) {
-    console.log(chalk.dim('  취소되었습니다. 위 명령어를 직접 실행해주세요.'));
+    console.log(chalk.dim(`  ${t('doctor.fzfInstallCancelled')}`));
     return;
   }
 
   const spinner = p.spinner();
-  spinner.start(`${pm.name}으로 fzf 설치 중`);
+  spinner.start(t('doctor.fzfInstallingWith', { pm: pm.name }));
   try {
     execSync(command, { stdio: 'pipe' });
-    spinner.stop(chalk.green('✓ fzf 설치 완료'));
+    spinner.stop(chalk.green(t('doctor.fzfInstallDone')));
   } catch (err) {
-    spinner.stop(chalk.red('✗ 설치 실패'));
+    spinner.stop(chalk.red(t('doctor.fzfInstallFailed')));
     console.log(
-      chalk.dim('  오류: ') +
+      chalk.dim(`  ${t('doctor.fzfInstallError')}`) +
         (err instanceof Error ? err.message : String(err)),
     );
   }

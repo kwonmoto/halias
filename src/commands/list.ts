@@ -2,6 +2,7 @@ import chalk from 'chalk';
 import { readStore } from '../core/store.js';
 import { aggregateStats } from '../core/stats.js';
 import type { Shortcut } from '../core/types.js';
+import { t } from '../lib/i18n.js';
 
 export type SortMode = 'name' | 'recent' | 'usage';
 
@@ -30,13 +31,9 @@ export async function runList(options: ListOptions = {}): Promise<void> {
 
   if (filtered.length === 0) {
     if (options.tag) {
-      console.log(chalk.dim(`태그 '${options.tag}'에 해당하는 단축키가 없습니다.`));
+      console.log(chalk.dim(t('list.noShortcutsTagged', { tag: options.tag })));
     } else {
-      console.log(
-        chalk.dim('등록된 단축키가 없습니다. ') +
-          chalk.cyan("'ha add'") +
-          chalk.dim('로 시작하세요.'),
-      );
+      console.log(chalk.dim(t('list.noShortcuts')));
     }
     return;
   }
@@ -49,12 +46,19 @@ export async function runList(options: ListOptions = {}): Promise<void> {
 
   const sorted = sortShortcuts(filtered, sort, usageMap);
 
+  const sortLbl = sortLabel(sort);
   const headerCount = options.tag
-    ? `${filtered.length}개 ${chalk.dim(`(태그: ${options.tag} · ${sortLabel(sort)})`)}`
-    : `${store.shortcuts.length}개 ${chalk.dim(`(${sortLabel(sort)})`)}`;
+    ? `${filtered.length}${chalk.dim(` (${t('list.headerWithTag', { count: '', tag: options.tag, sort: sortLbl }).replace('{count}', '').trim()}`)}`
+    : `${store.shortcuts.length}${chalk.dim(` (${sortLbl})`)}`;
+
+  // Simpler header construction
+  const countStr = options.tag ? String(filtered.length) : String(store.shortcuts.length);
+  const headerSuffix = options.tag
+    ? chalk.dim(`(태그: ${options.tag} · ${sortLbl})`)
+    : chalk.dim(`(${sortLbl})`);
 
   console.log();
-  console.log(chalk.bold(`  단축키 ${headerCount}`));
+  console.log(chalk.bold(`  ${t('list.header', { count: countStr })} ${headerSuffix}`));
   console.log();
 
   const maxName = Math.max(...sorted.map((s) => s.name.length));
@@ -62,13 +66,13 @@ export async function runList(options: ListOptions = {}): Promise<void> {
   for (const s of sorted) {
     const name = chalk.cyan(s.name.padEnd(maxName));
     const type = chalk.dim(s.type.padEnd(8));
-    const cmd = s.type === 'alias' ? s.command : chalk.italic('<function>');
+    const cmd = s.type === 'alias' ? s.command : chalk.italic(t('list.functionLabel'));
     const tags = s.tags.length > 0 ? chalk.dim(` [${s.tags.join(', ')}]`) : '';
 
     let suffix = tags;
     if (sort === 'usage' && usageMap) {
       const count = usageMap.get(s.name) ?? 0;
-      suffix += chalk.dim(`  · ${count}회 사용`);
+      suffix += chalk.dim(`  · ${t('list.usageCount', { count })}`);
     }
 
     console.log(`  ${name}  ${type}  ${cmd}${suffix}`);
@@ -105,5 +109,10 @@ function sortShortcuts(
 }
 
 function sortLabel(mode: SortMode): string {
-  return { name: '이름순', recent: '최근 변경순', usage: '사용 빈도순' }[mode];
+  const labels: Record<SortMode, string> = {
+    name: t('list.sortName'),
+    recent: t('list.sortRecent'),
+    usage: t('list.sortUsage'),
+  };
+  return labels[mode];
 }

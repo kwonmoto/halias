@@ -4,7 +4,8 @@ import * as p from '@clack/prompts';
 import chalk from 'chalk';
 import { readStore, writeStore } from '../core/store.js';
 import { generateAliasesFile } from '../core/generator.js';
-import { StoreSchema, ShortcutSchema, type Shortcut } from '../core/types.js';
+import { StoreSchema, type Shortcut } from '../core/types.js';
+import { t } from '../lib/i18n.js';
 
 /**
  * ha export [path] — 단축키를 JSON 파일로 백업.
@@ -20,7 +21,7 @@ export async function runExport(targetPath?: string): Promise<void> {
   await fs.writeFile(absPath, JSON.stringify(store, null, 2), 'utf-8');
 
   console.log();
-  console.log(chalk.green(`✓ ${store.shortcuts.length}개 단축키 백업됨`));
+  console.log(chalk.green(`✓ ${t('exportCmd.done', { count: store.shortcuts.length })}`));
   console.log(chalk.dim(`  ${absPath}`));
   console.log();
 }
@@ -54,7 +55,7 @@ export async function runImport(
     const parsed = JSON.parse(raw);
     imported = StoreSchema.parse(parsed);
   } catch (err) {
-    console.log(chalk.red('파일을 읽거나 파싱할 수 없습니다.'));
+    console.log(chalk.red(t('importCmd.parseError')));
     console.log(chalk.dim(`  ${absPath}`));
     if (err instanceof Error) console.log(chalk.dim(`  ${err.message}`));
     return;
@@ -65,18 +66,18 @@ export async function runImport(
 
   // 3. 머지 시뮬레이션 — 사용자에게 영향 미리 보여주기
   console.log();
-  console.log(chalk.bold('  Import 미리보기'));
+  console.log(chalk.bold(`  ${t('importCmd.header')}`));
   console.log();
-  console.log(chalk.dim(`  현재: ${current.shortcuts.length}개`));
-  console.log(chalk.dim(`  파일: ${imported.shortcuts.length}개`));
+  console.log(chalk.dim(`  ${t('importCmd.currentCount', { count: current.shortcuts.length })}`));
+  console.log(chalk.dim(`  ${t('importCmd.fileCount', { count: imported.shortcuts.length })}`));
   console.log();
 
   let finalShortcuts: Shortcut[];
 
   if (strategy === 'replace') {
     finalShortcuts = imported.shortcuts;
-    console.log(chalk.yellow('  ⚠ replace 전략: 기존 단축키를 모두 삭제하고 파일 내용으로 교체합니다.'));
-    console.log(chalk.dim(`  결과: ${finalShortcuts.length}개`));
+    console.log(chalk.yellow(`  ${t('importCmd.replaceWarning')}`));
+    console.log(chalk.dim(`  ${t('importCmd.resultCount', { count: finalShortcuts.length })}`));
   } else {
     // merge — 기존 우선
     const currentNames = new Set(current.shortcuts.map((s) => s.name));
@@ -85,31 +86,31 @@ export async function runImport(
 
     finalShortcuts = [...current.shortcuts, ...additions];
 
-    console.log(chalk.green(`  + 추가: ${additions.length}개`));
+    console.log(chalk.green(`  ${t('importCmd.added', { count: additions.length })}`));
     if (additions.length > 0) {
       additions.slice(0, 5).forEach((s) => {
         console.log(chalk.dim(`    • ${s.name}`));
       });
       if (additions.length > 5) {
-        console.log(chalk.dim(`    ... 그 외 ${additions.length - 5}개`));
+        console.log(chalk.dim(`    ${t('importCmd.moreItems', { count: additions.length - 5 })}`));
       }
     }
 
     if (skipped > 0) {
-      console.log(chalk.yellow(`  ↩ 건너뜀: ${skipped}개 (이미 같은 이름 존재)`));
+      console.log(chalk.yellow(`  ${t('importCmd.skipped', { count: skipped })}`));
     }
-    console.log(chalk.dim(`  결과: ${finalShortcuts.length}개`));
+    console.log(chalk.dim(`  ${t('importCmd.resultCount', { count: finalShortcuts.length })}`));
   }
   console.log();
 
   // 4. 사용자 확인
   const confirmed = await p.confirm({
-    message: '진행할까요?',
+    message: t('importCmd.confirmPrompt'),
     initialValue: strategy === 'merge', // merge는 안전하니 default Y
   });
 
   if (p.isCancel(confirmed) || !confirmed) {
-    p.cancel('취소되었습니다.');
+    p.cancel(t('importCmd.cancelled'));
     return;
   }
 
@@ -119,8 +120,8 @@ export async function runImport(
   await generateAliasesFile(newStore);
 
   console.log(
-    chalk.green('✓ Import 완료. ') +
-      chalk.dim('현재 셸에 즉시 반영하려면: ') +
-      chalk.cyan('hareload'),
+    chalk.green(`✓ ${t('importCmd.done')}`) +
+      chalk.dim(t('importCmd.doneHint')) +
+      chalk.cyan(t('common.hareload')),
   );
 }

@@ -5,6 +5,7 @@ import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { getConfiguredEditor, saveConfiguredEditor } from '../core/config.js';
+import { t } from './i18n.js';
 
 /**
  * function 타입 본문을 에디터로 편집.
@@ -26,11 +27,11 @@ export async function editFunctionBody(
   const editor = envEditor ?? configEditor ?? (await pickEditor());
 
   if (!editor) {
-    p.log.warn('사용 가능한 에디터를 찾을 수 없어 인라인 편집으로 전환합니다.');
+    p.log.warn(t('editor.noEditorFallback'));
     const result = await p.text({
-      message: '함수 본문 ($1, $2 사용 가능)',
+      message: t('editor.inlineBodyPrompt'),
       initialValue: current,
-      validate: (v) => (v ? undefined : '명령어를 입력해주세요'),
+      validate: (v) => (v ? undefined : t('editor.inlineBodyRequired')),
     });
     if (p.isCancel(result)) return null;
     return result as string;
@@ -38,7 +39,7 @@ export async function editFunctionBody(
 
   if (!envEditor && !configEditor) {
     saveConfiguredEditor(editor);
-    p.log.success(`${chalk.cyan(editor)} 을 기본 에디터로 저장했습니다.`);
+    p.log.success(t('editor.savedEditor', { editor: chalk.cyan(editor) }));
   }
 
   const tmpDir = mkdtempSync(join(tmpdir(), 'halias-'));
@@ -48,12 +49,12 @@ export async function editFunctionBody(
   writeFileSync(tmpFile, header + current, 'utf8');
 
   const [bin, ...extraArgs] = resolveEditorArgs(editor);
-  p.log.info(`${chalk.cyan(bin)} 로 열립니다…`);
+  p.log.info(`${chalk.cyan(bin)} ${t('editor.opening')}`);
 
   const result = spawnSync(bin, [...extraArgs, tmpFile], { stdio: 'inherit' });
 
   if (result.error) {
-    p.log.error(`에디터 실행 실패: ${result.error.message}`);
+    p.log.error(t('editor.openFailed', { message: result.error.message }));
     rmSync(tmpDir, { recursive: true, force: true });
     return null;
   }
@@ -68,7 +69,7 @@ export async function editFunctionBody(
     .trim();
 
   if (!body) {
-    p.log.warn('빈 내용으로 저장되었습니다. 취소합니다.');
+    p.log.warn(t('editor.emptySaved'));
     return null;
   }
 
@@ -101,11 +102,11 @@ async function pickEditor(): Promise<string | undefined> {
 
   const options = [
     ...available.map(({ bin, label }) => ({ value: bin, label, hint: bin })),
-    { value: '__custom__', label: '직접 입력', hint: '' },
+    { value: '__custom__', label: t('editor.customInput'), hint: '' },
   ];
 
   const selected = await p.select({
-    message: '함수 본문 편집에 사용할 에디터를 선택하세요 (한 번만 물어봅니다)',
+    message: t('editor.selectPrompt'),
     options,
   });
 
@@ -113,9 +114,9 @@ async function pickEditor(): Promise<string | undefined> {
 
   if (selected === '__custom__') {
     const custom = await p.text({
-      message: '에디터 경로 또는 명령어 입력',
-      placeholder: '/usr/local/bin/hx',
-      validate: (v) => (v ? undefined : '입력해주세요'),
+      message: t('editor.customInputPrompt'),
+      placeholder: t('editor.customInputPlaceholder'),
+      validate: (v) => (v ? undefined : t('editor.customInputRequired')),
     });
     if (p.isCancel(custom)) return undefined;
     return custom as string;
