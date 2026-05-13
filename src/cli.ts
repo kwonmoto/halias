@@ -19,6 +19,7 @@ import { runEdit } from './commands/edit.js';
 import { runExport, runImport } from './commands/export-import.js';
 import { runSuggest } from './commands/suggest.js';
 import { runRename } from './commands/rename.js';
+import { runCompletion } from './commands/completion.js';
 
 const program = new Command();
 
@@ -138,6 +139,13 @@ program
   .option('--strategy <mode>', "전략: 'merge' (기본) | 'replace'", 'merge')
   .action(async (filePath: string, options: { strategy?: 'merge' | 'replace' }) => {
     await runImport(filePath, options);
+  });
+
+program
+  .command('completion [shell]')
+  .description('셸 자동완성 스크립트 출력 (zsh | bash)')
+  .action((shell?: string) => {
+    runCompletion(shell);
   });
 
 program.parseAsync().catch((err) => {

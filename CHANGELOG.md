@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `ha completion zsh` / `ha completion bash` outputs a shell completion script. Enables tab-completing commands and shortcut names (`ha edit <tab>`, `ha rm <tab>`, etc.).
+- `ha install` now also offers to set up shell completion in one step.
 - `ha add` now opens `$EDITOR` for function-type shortcuts, consistent with `ha edit`.
 
 ### Changed

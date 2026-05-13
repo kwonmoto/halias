@@ -6,9 +6,11 @@ import * as p from '@clack/prompts';
 import { ALIASES_OUTPUT } from '../lib/paths.js';
 import { generateAliasesFile } from '../core/generator.js';
 import { readStore } from '../core/store.js';
+import { completionSourceLine, type Shell } from './completion.js';
 
 const HALIAS_MARKER = '# >>> halias shortcuts >>>';
 const HALIAS_END_MARKER = '# <<< halias shortcuts <<<';
+const HALIAS_COMPLETION_MARKER = '# halias completion';
 
 function detectRcFile(): string {
   const shell = process.env.SHELL ?? '';
@@ -60,8 +62,23 @@ export async function runInstall(): Promise<void> {
   }
 
   await fs.appendFile(rcFile, block, 'utf-8');
-  p.outro(
-    chalk.green('✓ 설치 완료. ') +
-      chalk.dim(`새 터미널을 열거나 source ${rcFile} 로 적용하세요.`),
-  );
+  p.log.success('셸 통합 설치 완료.');
+
+  // completion 설정
+  const rcContentAfter = await fs.readFile(rcFile, 'utf-8');
+  if (!rcContentAfter.includes(HALIAS_COMPLETION_MARKER)) {
+    const shell = rcFile.includes('zsh') ? 'zsh' : 'bash';
+    const completionConfirm = await p.confirm({
+      message: `셸 자동완성도 설정할까요? (${chalk.cyan(`ha <tab>`)} 으로 명령어·단축키 완성)`,
+      initialValue: true,
+    });
+
+    if (!p.isCancel(completionConfirm) && completionConfirm) {
+      const completionBlock = `\n${HALIAS_COMPLETION_MARKER}\n${completionSourceLine(shell as Shell)}\n`;
+      await fs.appendFile(rcFile, completionBlock, 'utf-8');
+      p.log.success('자동완성 설정 완료.');
+    }
+  }
+
+  p.outro(chalk.dim(`새 터미널을 열거나 source ${rcFile} 로 적용하세요.`));
 }
