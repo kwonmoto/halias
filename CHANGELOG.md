@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-05-13
+
 ### Added
 
 - `ha completion zsh` / `ha completion bash` outputs a shell completion script. Enables tab-completing commands and shortcut names (`ha edit <tab>`, `ha rm <tab>`, etc.).
