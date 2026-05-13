@@ -5,6 +5,7 @@ import { generateAliasesFile } from '../core/generator.js';
 import { ShortcutSchema, type Shortcut } from '../core/types.js';
 import { readLastShellCommand } from '../lib/shell-history.js';
 import { detectSystemCommandConflict } from '../lib/system-commands.js';
+import { editFunctionBody } from '../lib/editor.js';
 
 type ShortcutType = 'alias' | 'function';
 
@@ -13,10 +14,9 @@ interface AddOptions {
   last?: boolean;
 }
 
-interface AddFormResult {
+interface AddMetaResult {
   name: string;
   type: ShortcutType;
-  command: string;
   description: string;
   tags: string;
 }
@@ -45,7 +45,7 @@ export async function runAdd(options: AddOptions = {}): Promise<void> {
     return;
   }
 
-  const result = (await p.group(
+  const meta = (await p.group(
     {
       name: () =>
         p.text({
@@ -72,18 +72,6 @@ export async function runAdd(options: AddOptions = {}): Promise<void> {
           initialValue: 'alias',
         }),
 
-      command: ({ results }) => {
-        return p.text({
-          message:
-            results.type === 'alias'
-              ? '실행할 명령어는? (예: git status)'
-              : '함수 본문은? ($1, $2 등 인자 사용 가능)',
-          placeholder:
-            results.type === 'alias' ? 'git status' : 'mkdir -p "$1" && cd "$1"',
-          validate: (v) => (v ? undefined : '명령어를 입력해주세요'),
-        });
-      },
-
       description: () =>
         p.text({
           message: '설명 (선택)',
@@ -102,15 +90,37 @@ export async function runAdd(options: AddOptions = {}): Promise<void> {
         process.exit(0);
       },
     },
-  )) as AddFormResult;
+  )) as AddMetaResult;
+
+  // command — alias는 인라인, function은 $EDITOR
+  let command: string;
+  if (meta.type === 'function') {
+    const body = await editFunctionBody('', meta.name);
+    if (body === null) {
+      p.cancel('취소되었습니다.');
+      return;
+    }
+    command = body;
+  } else {
+    const input = await p.text({
+      message: '실행할 명령어는? (예: git status)',
+      placeholder: 'git status',
+      validate: (v) => (v ? undefined : '명령어를 입력해주세요'),
+    });
+    if (p.isCancel(input)) {
+      p.cancel('취소되었습니다.');
+      return;
+    }
+    command = input as string;
+  }
 
   const now = new Date().toISOString();
   const shortcut: Shortcut = {
-    name: result.name,
-    command: result.command,
-    type: result.type,
-    description: result.description || undefined,
-    tags: (result.tags ?? '')
+    name: meta.name,
+    command,
+    type: meta.type,
+    description: meta.description || undefined,
+    tags: (meta.tags ?? '')
       .split(',')
       .map((t) => t.trim())
       .filter(Boolean),

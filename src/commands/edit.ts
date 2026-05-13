@@ -1,13 +1,9 @@
 import * as p from '@clack/prompts';
 import chalk from 'chalk';
-import { spawnSync, execSync } from 'child_process';
-import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'fs';
-import { tmpdir } from 'os';
-import { join } from 'path';
 import { readStore, writeStore } from '../core/store.js';
 import { generateAliasesFile } from '../core/generator.js';
 import { ShortcutSchema, type Shortcut } from '../core/types.js';
-import { getConfiguredEditor, saveConfiguredEditor } from '../core/config.js';
+import { editFunctionBody } from '../lib/editor.js';
 
 type ShortcutType = 'alias' | 'function';
 
@@ -124,7 +120,7 @@ export async function runEdit(name?: string): Promise<void> {
 
   // 3. command — alias는 인라인 입력, function은 $EDITOR
   const newCommand = meta.type === 'function'
-    ? await editInEditor(target.command, target.name)
+    ? await editFunctionBody(target.command, target.name)
     : await editInline(target.command, meta.type);
 
   if (newCommand === null) {
@@ -192,154 +188,6 @@ async function editInline(current: string, _type: ShortcutType): Promise<string 
   });
   if (p.isCancel(result)) return null;
   return result as string;
-}
-
-/**
- * function 타입: 에디터로 임시 파일 열어 편집.
- *
- * 에디터 우선순위:
- *   1. $VISUAL / $EDITOR 환경변수
- *   2. ~/.halias/config.json 에 저장된 선택
- *   3. 시스템에 설치된 에디터 자동 감지 → 선택 프롬프트 (선택 결과 저장)
- *   4. 아무것도 없으면 인라인 폴백
- *
- * 취소(빈 파일 저장) 시 null 반환.
- */
-async function editInEditor(current: string, shortcutName: string): Promise<string | null> {
-  const envEditor = process.env['VISUAL'] ?? process.env['EDITOR'];
-  const configEditor = getConfiguredEditor();
-  const editor = envEditor ?? configEditor ?? (await pickEditor());
-
-  if (!editor) {
-    p.log.warn('사용 가능한 에디터를 찾을 수 없어 인라인 편집으로 전환합니다.');
-    const result = await p.text({
-      message: '함수 본문 ($1, $2 사용 가능)',
-      initialValue: current,
-      validate: (v) => (v ? undefined : '명령어를 입력해주세요'),
-    });
-    if (p.isCancel(result)) return null;
-    return result as string;
-  }
-
-  // 처음 감지된 에디터면 저장 (환경변수는 저장 안 함 — 사용자가 직접 설정한 것)
-  if (!envEditor && !configEditor) {
-    saveConfiguredEditor(editor);
-    p.log.success(`${chalk.cyan(editor)} 을 기본 에디터로 저장했습니다.`);
-  }
-
-  // 임시 파일 생성
-  const tmpDir = mkdtempSync(join(tmpdir(), 'halias-'));
-  const tmpFile = join(tmpDir, `${shortcutName}.sh`);
-
-  const header = `# halias: function body for '${shortcutName}'\n# 저장 후 에디터를 닫으면 반영됩니다. 빈 파일로 저장하면 취소됩니다.\n\n`;
-  writeFileSync(tmpFile, header + current, 'utf8');
-
-  const [bin, ...extraArgs] = resolveEditorArgs(editor);
-  p.log.info(`${chalk.cyan(bin)} 로 열립니다…`);
-
-  const result = spawnSync(bin, [...extraArgs, tmpFile], { stdio: 'inherit' });
-
-  if (result.error) {
-    p.log.error(`에디터 실행 실패: ${result.error.message}`);
-    rmSync(tmpDir, { recursive: true, force: true });
-    return null;
-  }
-
-  const raw = readFileSync(tmpFile, 'utf8');
-  rmSync(tmpDir, { recursive: true, force: true });
-
-  // 주석 헤더 제거 후 정리
-  const body = raw
-    .split('\n')
-    .filter((line) => !line.startsWith('#'))
-    .join('\n')
-    .trim();
-
-  if (!body) {
-    p.log.warn('빈 내용으로 저장되었습니다. 취소합니다.');
-    return null;
-  }
-
-  return body;
-}
-
-/** 시스템에 설치된 에디터 목록을 감지해 사용자가 선택하게 함. 취소 또는 비TTY 시 undefined. */
-async function pickEditor(): Promise<string | undefined> {
-  if (!process.stdin.isTTY) return undefined;
-  const candidates = [
-    { bin: 'code',  label: 'VSCode' },
-    { bin: 'zed',   label: 'Zed' },
-    { bin: 'subl',  label: 'Sublime Text' },
-    { bin: 'nvim',  label: 'Neovim' },
-    { bin: 'vim',   label: 'Vim' },
-    { bin: 'nano',  label: 'nano' },
-  ];
-
-  const available = candidates.filter(({ bin }) => {
-    try {
-      execSync(`command -v ${bin}`, { stdio: 'ignore' });
-      return true;
-    } catch {
-      return false;
-    }
-  });
-
-  if (available.length === 0) return undefined;
-
-  const options = [
-    ...available.map(({ bin, label }) => ({ value: bin, label, hint: bin })),
-    { value: '__custom__', label: '직접 입력', hint: '' },
-  ];
-
-  const selected = await p.select({
-    message: '함수 본문 편집에 사용할 에디터를 선택하세요 (한 번만 물어봅니다)',
-    options,
-  });
-
-  if (p.isCancel(selected)) return undefined;
-
-  if (selected === '__custom__') {
-    const custom = await p.text({
-      message: '에디터 경로 또는 명령어 입력',
-      placeholder: '/usr/local/bin/hx',
-      validate: (v) => (v ? undefined : '입력해주세요'),
-    });
-    if (p.isCancel(custom)) return undefined;
-    return custom as string;
-  }
-
-  return selected as string;
-}
-
-/**
- * $EDITOR 문자열을 [bin, ...args] 로 파싱하고,
- * GUI 에디터(code, subl, zed 등)에는 --wait 플래그를 자동 주입.
- * 사용자가 이미 --wait 을 넣었으면 중복 추가하지 않음.
- */
-function resolveEditorArgs(editor: string): string[] {
-  // 공백 분리 (예: "code --wait" → ["code", "--wait"])
-  const parts = editor.trim().split(/\s+/);
-  const bin = parts[0] ?? editor;
-  const userArgs = parts.slice(1);
-
-  // --wait 계열 플래그가 이미 있으면 그대로 사용
-  const hasWait = userArgs.some((a) => a === '--wait' || a === '-w' || a === '--hold');
-  if (hasWait) return [bin, ...userArgs];
-
-  // GUI 에디터 바이너리명 기준으로 --wait 자동 주입
-  const baseBin = bin.split('/').at(-1) ?? bin; // 경로 포함일 경우 basename
-  const guiEditors: Record<string, string> = {
-    code: '--wait',       // VSCode
-    'code-insiders': '--wait',
-    subl: '--wait',       // Sublime Text
-    atom: '--wait',       // Atom
-    mate: '--wait',       // TextMate
-    zed: '--wait',        // Zed
-    nova: '--wait',       // Nova
-  };
-
-  const waitFlag = guiEditors[baseBin];
-  return waitFlag ? [bin, waitFlag, ...userArgs] : [bin, ...userArgs];
 }
 
 /**

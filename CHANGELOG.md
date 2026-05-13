@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `ha add` now opens `$EDITOR` for function-type shortcuts, consistent with `ha edit`.
+
+### Changed
+
+- Editor utilities (`editFunctionBody`, `resolveEditorArgs`) extracted to `src/lib/editor.ts` and shared between `add` and `edit` commands.
+
 ## [0.3.0] - 2026-05-13
 
 ### Added
