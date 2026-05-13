@@ -10,7 +10,7 @@ export const ShortcutSchema = z.object({
   name: z
     .string()
     .min(1)
-    .regex(/^[a-zA-Z_][a-zA-Z0-9_]*$/, '셸 이름 규칙: 영문/숫자/_, 첫 글자는 영문 또는 _'),
+    .regex(/^[a-zA-Z_][a-zA-Z0-9_-]*$/, '셸 이름 규칙: 영문/숫자/_/-  첫 글자는 영문 또는 _'),
   command: z.string().min(1),
   type: z.enum(['alias', 'function']),
   description: z.string().optional(),
