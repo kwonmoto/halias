@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - CLI and README positioning now describe halias as a personal command layer that learns from real shortcut usage.
+- `ha suggest` now filters common shell/session setup noise such as shell integration sourcing, virtualenv activation, `eval`, `export`, and `unset`.
 
 ### Fixed
 

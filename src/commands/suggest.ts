@@ -16,6 +16,14 @@ interface Suggestion {
 }
 
 const IGNORED_COMMAND_RE = /^(?:cd|pwd|ls|ll|la|clear|exit|history|ha|halias)(?:\s|$)/;
+const SETUP_NOISE_RE = [
+  /^source\s+.*\/shellIntegration-[^/]*\.(?:zsh|bash|sh)$/,
+  /^source\s+.*\/\.venv\/bin\/activate$/,
+  /^source\s+.*\/venv\/bin\/activate$/,
+  /^eval\s+["']?\$\(/,
+  /^export\s+[A-Z_][A-Z0-9_]*=/,
+  /^unset\s+[A-Z_][A-Z0-9_]*(?:\s|$)/,
+];
 
 export async function runSuggest(options: SuggestOptions = {}): Promise<void> {
   const topN = parsePositiveInt(options.top, 10);
@@ -112,6 +120,7 @@ function collectSuggestions(
 function isSuggestableCommand(command: string, existingCommands: Set<string>): boolean {
   if (command.length < 8) return false;
   if (IGNORED_COMMAND_RE.test(command)) return false;
+  if (SETUP_NOISE_RE.some((pattern) => pattern.test(command))) return false;
   if (existingCommands.has(command)) return false;
   return true;
 }

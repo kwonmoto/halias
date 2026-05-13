@@ -176,7 +176,7 @@ ha suggest --save    # pick a suggestion and save it immediately
   To save one: ha suggest --save
 ```
 
-Suggestions skip commands that are already saved as shortcuts, short one-off commands, and common navigation commands like `cd`, `ls`, and `pwd`.
+Suggestions skip commands that are already saved as shortcuts, short one-off commands, session setup noise, and common navigation commands like `cd`, `ls`, and `pwd`.
 
 ## Backup & restore
 
