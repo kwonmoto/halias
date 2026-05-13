@@ -276,6 +276,17 @@ const _ko = {
     customInputPlaceholder: '/usr/local/bin/hx',
     customInputRequired: '입력해주세요',
   },
+  tags: {
+    noShortcuts: "등록된 단축키가 없습니다. 'ha add'로 시작하세요.",
+    notFound: "태그 '{tag}'를 찾을 수 없습니다.",
+    noTags: '아직 태그가 없습니다.',
+    noTagsHint: '태그를 추가하려면 ',
+    noTagsHint2: ' 로 단축키를 추가할 때 태그를 입력하세요.',
+    header: '태그 {count}개',
+    shortcutCount: '단축키 {count}개',
+    selectPrompt: '태그 선택 (해당 단축키 목록 보기)',
+    exitOption: '종료',
+  },
   common: {
     functionLabel: '<function>',
     hareload: 'hareload',

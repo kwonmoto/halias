@@ -79,6 +79,7 @@ hareload             # 새 단축키를 현재 셸에 즉시 반영
 | `ha edit [name]` | 기존 단축키 편집 (이름 없으면 선택 화면) |
 | `ha rename [old] [new]` | 전체 폼 없이 이름만 빠르게 변경 |
 | `ha list` (= `ha ls`) | 단축키 목록 (`--sort name\|recent\|usage`, `--tag <태그>`) |
+| `ha tags [태그]` | 전체 태그 목록 + 개수 보기. 태그 선택 시 해당 단축키 필터 |
 | `ha rm [name]` | 단축키 삭제 (자주 쓰는 거면 추가 확인) |
 | `ha stats` | 사용 통계 (top N, 미사용, 기간 필터) |
 | `ha unused` | 한 번도 안 쓴 / 오래된 단축키 표시 |

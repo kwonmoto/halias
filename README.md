@@ -79,6 +79,7 @@ hareload             # apply newly added shortcuts to current shell
 | `ha edit [name]` | Edit an existing shortcut (picker if no name) |
 | `ha rename [old] [new]` | Rename a shortcut without the full edit form |
 | `ha list` (= `ha ls`) | List shortcuts (`--sort name\|recent\|usage`, `--tag <tag>`) |
+| `ha tags [tag]` | Show all tags with counts; select a tag to filter the list |
 | `ha rm [name]` | Delete a shortcut (extra confirm for frequently used) |
 | `ha stats` | Usage stats (top N, unused, time-filtered) |
 | `ha unused` | Show never-used and stale shortcuts |

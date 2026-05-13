@@ -21,6 +21,7 @@ import { runExport, runImport } from './commands/export-import.js';
 import { runSuggest } from './commands/suggest.js';
 import { runRename } from './commands/rename.js';
 import { runCompletion } from './commands/completion.js';
+import { runTags } from './commands/tags.js';
 
 initLocale();
 
@@ -142,6 +143,13 @@ program
   .option('--strategy <mode>', "전략: 'merge' (기본) | 'replace'", 'merge')
   .action(async (filePath: string, options: { strategy?: 'merge' | 'replace' }) => {
     await runImport(filePath, options);
+  });
+
+program
+  .command('tags [tag]')
+  .description('태그 목록 보기 / 태그 지정 시 해당 단축키 필터')
+  .action(async (tag?: string) => {
+    await runTags(tag);
   });
 
 program

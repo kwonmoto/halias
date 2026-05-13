@@ -272,6 +272,17 @@ export const en: Messages = {
     customInputPlaceholder: '/usr/local/bin/hx',
     customInputRequired: 'Please enter a value',
   },
+  tags: {
+    noShortcuts: "No shortcuts registered. Start with 'ha add'.",
+    notFound: "Tag '{tag}' not found.",
+    noTags: 'No tags yet.',
+    noTagsHint: 'To add tags, use ',
+    noTagsHint2: ' and enter tags when adding a shortcut.',
+    header: '{count} tags',
+    shortcutCount: '{count} shortcuts',
+    selectPrompt: 'Select a tag to view shortcuts',
+    exitOption: 'Exit',
+  },
   common: {
     functionLabel: '<function>',
     hareload: 'hareload',
