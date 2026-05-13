@@ -54,7 +54,7 @@ export async function runList(options: ListOptions = {}): Promise<void> {
   // Simpler header construction
   const countStr = options.tag ? String(filtered.length) : String(store.shortcuts.length);
   const headerSuffix = options.tag
-    ? chalk.dim(`(태그: ${options.tag} · ${sortLbl})`)
+    ? chalk.dim(`(${t('list.tagPrefix')}${options.tag} · ${sortLbl})`)
     : chalk.dim(`(${sortLbl})`);
 
   console.log();

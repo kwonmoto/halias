@@ -1,4 +1,5 @@
 import { execSync } from 'node:child_process';
+import { t } from './i18n.js';
 
 /**
  * 절대로 덮어씌우면 안 되는 핵심 명령어들.
@@ -30,7 +31,7 @@ export function detectSystemCommandConflict(name: string): {
   if (CRITICAL_COMMANDS.has(name)) {
     return {
       conflict: true,
-      reason: `'${name}' 은(는) 자주 쓰는 시스템 명령어입니다. 덮어씌우면 시스템 동작이 망가질 수 있어요.`,
+      reason: t('systemCommands.criticalConflict', { name }),
     };
   }
 
@@ -44,7 +45,7 @@ export function detectSystemCommandConflict(name: string): {
     if (result) {
       return {
         conflict: true,
-        reason: `'${name}' 이름의 명령어가 이미 시스템에 존재합니다 (${result}). halias 단축키로 등록하면 이를 덮어씁니다.`,
+        reason: t('systemCommands.existsConflict', { name, path: result }),
       };
     }
   } catch {

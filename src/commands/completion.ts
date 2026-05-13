@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+import { t } from '../lib/i18n.js';
 
 export type Shell = 'zsh' | 'bash';
 
@@ -20,7 +21,7 @@ export function runCompletion(shell: string | undefined): void {
   } else if (target === 'bash') {
     process.stdout.write(bashScript());
   } else {
-    console.error(chalk.red(`지원하지 않는 셸: ${target}. zsh 또는 bash 를 지정하세요.`));
+    console.error(chalk.red(t('completion.unsupportedShell', { shell: target })));
     process.exit(1);
   }
 }
@@ -64,22 +65,25 @@ _ha_tags() {
 
 _ha() {
   local commands=(
-    'add:새 단축키 추가'
-    'edit:단축키 편집'
-    'rename:이름 변경'
-    'list:목록 보기'
-    'ls:목록 보기'
-    'rm:단축키 삭제'
-    'remove:단축키 삭제'
-    'search:퍼지 검색'
-    'stats:사용 통계'
-    'unused:미사용 단축키'
-    'suggest:단축키 후보 추천'
-    'export:백업'
-    'import:복원'
-    'install:셸 통합 설치'
-    'doctor:환경 점검'
-    'completion:자동완성 스크립트 출력'
+    'add:${t('completion.cmdAdd')}'
+    'edit:${t('completion.cmdEdit')}'
+    'rename:${t('completion.cmdRename')}'
+    'list:${t('completion.cmdList')}'
+    'ls:${t('completion.cmdList')}'
+    'rm:${t('completion.cmdRm')}'
+    'remove:${t('completion.cmdRm')}'
+    'search:${t('completion.cmdSearch')}'
+    'stats:${t('completion.cmdStats')}'
+    'unused:${t('completion.cmdUnused')}'
+    'suggest:${t('completion.cmdSuggest')}'
+    'export:${t('completion.cmdExport')}'
+    'import:${t('completion.cmdImport')}'
+    'tags:${t('completion.cmdTags')}'
+    'install:${t('completion.cmdInstall')}'
+    'doctor:${t('completion.cmdDoctor')}'
+    'config:${t('completion.cmdConfig')}'
+    'import-rc:${t('completion.cmdImportRc')}'
+    'completion:${t('completion.cmdCompletion')}'
   )
 
   local shortcuts
@@ -96,13 +100,13 @@ _ha() {
           _describe 'shortcut' shortcuts
           ;;
         list|ls)
-          _arguments '--sort[정렬]:mode:(name recent usage)' '--tag[태그 필터]:tag:($(  _ha_tags))'
+          _arguments '--sort[${t('completion.optSort')}]:mode:(name recent usage)' '--tag[${t('completion.optTag')}]:tag:($(  _ha_tags))'
           ;;
         stats)
-          _arguments '--top[top N]:n:' '--since[기간]:period:' '--unused[미사용만]' '--clean[일괄 삭제]'
+          _arguments '--top[top N]:n:' '--since[${t('completion.optSince')}]:period:' '--unused[${t('completion.optUnused')}]' '--clean[${t('completion.optClean')}]'
           ;;
         suggest)
-          _arguments '--top[top N]:n:' '--min[최소 반복 횟수]:n:' '--save[선택해서 저장]'
+          _arguments '--top[top N]:n:' '--min[${t('completion.optMin')}]:n:' '--save[${t('completion.optSave')}]'
           ;;
         completion)
           _describe 'shell' '(zsh bash)'

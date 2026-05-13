@@ -120,13 +120,13 @@ async function checkShellHistory(): Promise<CheckResult> {
     return {
       level: 'warn',
       message: t('doctor.shellHistoryEmpty'),
-      detail: readable.map((file) => `  • ${path.basename(file.path)} 읽음 (0개)`).join('\n'),
+      detail: readable.map((file) => `  • ${path.basename(file.path)} ${t('doctor.shellHistoryReadEmpty')}`).join('\n'),
       fix: t('doctor.shellHistoryEmptyFix'),
     };
   }
 
   const detail = readable
-    .map((file) => `  • ${path.basename(file.path)}: ${file.commandCount}개`)
+    .map((file) => `  • ${path.basename(file.path)}: ${t('doctor.shellHistoryFileCount', { count: file.commandCount })}`)
     .join('\n');
 
   return {
@@ -237,7 +237,7 @@ function printChecks(checks: CheckResult[]): void {
     const summary = [];
     if (errors > 0) summary.push(chalk.red(t('doctor.summaryErrors', { count: errors })));
     if (warns > 0) summary.push(chalk.yellow(t('doctor.summaryWarnings', { count: warns })));
-    console.log('  ' + summary.join(', ') + ' 발견');
+    console.log('  ' + summary.join(', ') + ' ' + t('doctor.summaryFound'));
   }
 }
 

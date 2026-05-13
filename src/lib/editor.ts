@@ -45,7 +45,7 @@ export async function editFunctionBody(
   const tmpDir = mkdtempSync(join(tmpdir(), 'halias-'));
   const tmpFile = join(tmpDir, `${shortcutName}.sh`);
 
-  const header = `# halias: function body for '${shortcutName}'\n# 저장 후 에디터를 닫으면 반영됩니다. 빈 파일로 저장하면 취소됩니다.\n\n`;
+  const header = `# halias: function body for '${shortcutName}'\n# ${t('editor.fileHeaderHint')}\n\n`;
   writeFileSync(tmpFile, header + current, 'utf8');
 
   const [bin, ...extraArgs] = resolveEditorArgs(editor);
