@@ -219,9 +219,10 @@ async function editInEditor(current: string, shortcutName: string): Promise<stri
   const header = `# halias: function body for '${shortcutName}'\n# 저장 후 에디터를 닫으면 반영됩니다. 빈 파일로 저장하면 취소됩니다.\n\n`;
   writeFileSync(tmpFile, header + current, 'utf8');
 
-  p.log.info(`${chalk.cyan(editor)} 로 열립니다…`);
+  const [bin, ...extraArgs] = resolveEditorArgs(editor);
+  p.log.info(`${chalk.cyan(bin)} 로 열립니다…`);
 
-  const result = spawnSync(editor, [tmpFile], { stdio: 'inherit' });
+  const result = spawnSync(bin, [...extraArgs, tmpFile], { stdio: 'inherit' });
 
   if (result.error) {
     p.log.error(`에디터 실행 실패: ${result.error.message}`);
@@ -245,6 +246,37 @@ async function editInEditor(current: string, shortcutName: string): Promise<stri
   }
 
   return body;
+}
+
+/**
+ * $EDITOR 문자열을 [bin, ...args] 로 파싱하고,
+ * GUI 에디터(code, subl, zed 등)에는 --wait 플래그를 자동 주입.
+ * 사용자가 이미 --wait 을 넣었으면 중복 추가하지 않음.
+ */
+function resolveEditorArgs(editor: string): string[] {
+  // 공백 분리 (예: "code --wait" → ["code", "--wait"])
+  const parts = editor.trim().split(/\s+/);
+  const bin = parts[0] ?? editor;
+  const userArgs = parts.slice(1);
+
+  // --wait 계열 플래그가 이미 있으면 그대로 사용
+  const hasWait = userArgs.some((a) => a === '--wait' || a === '-w' || a === '--hold');
+  if (hasWait) return [bin, ...userArgs];
+
+  // GUI 에디터 바이너리명 기준으로 --wait 자동 주입
+  const baseBin = bin.split('/').at(-1) ?? bin; // 경로 포함일 경우 basename
+  const guiEditors: Record<string, string> = {
+    code: '--wait',       // VSCode
+    'code-insiders': '--wait',
+    subl: '--wait',       // Sublime Text
+    atom: '--wait',       // Atom
+    mate: '--wait',       // TextMate
+    zed: '--wait',        // Zed
+    nova: '--wait',       // Nova
+  };
+
+  const waitFlag = guiEditors[baseBin];
+  return waitFlag ? [bin, waitFlag, ...userArgs] : [bin, ...userArgs];
 }
 
 /**
