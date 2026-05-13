@@ -18,6 +18,7 @@ import { runStats } from './commands/stats.js';
 import { runEdit } from './commands/edit.js';
 import { runExport, runImport } from './commands/export-import.js';
 import { runSuggest } from './commands/suggest.js';
+import { runRename } from './commands/rename.js';
 
 const program = new Command();
 
@@ -104,6 +105,13 @@ program
   .option('--clean', '선택해서 일괄 삭제')
   .action(async (options: { clean?: boolean }) => {
     await runStats({ unused: true, clean: options.clean });
+  });
+
+program
+  .command('rename [old] [new]')
+  .description('단축키 이름 변경 (ha rename gs gst)')
+  .action(async (oldName?: string, newName?: string) => {
+    await runRename(oldName, newName);
   });
 
 program
