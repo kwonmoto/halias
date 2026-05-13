@@ -77,9 +77,12 @@ hareload             # 새 단축키를 현재 셸에 즉시 반영
 | `ha add` | 대화형으로 새 단축키 추가 |
 | `ha add --last [name]` | 직전에 실행한 셸 명령을 단축키로 저장 |
 | `ha edit [name]` | 기존 단축키 편집 (이름 없으면 선택 화면) |
-| `ha list` (= `ha ls`) | 단축키 목록 (`--sort name\|recent\|usage`) |
+| `ha rename [old] [new]` | 전체 폼 없이 이름만 빠르게 변경 |
+| `ha list` (= `ha ls`) | 단축키 목록 (`--sort name\|recent\|usage`, `--tag <태그>`) |
 | `ha rm [name]` | 단축키 삭제 (자주 쓰는 거면 추가 확인) |
 | `ha stats` | 사용 통계 (top N, 미사용, 기간 필터) |
+| `ha unused` | 한 번도 안 쓴 / 오래된 단축키 표시 |
+| `ha unused --clean` | 미사용 단축키 체크박스로 선택해 일괄 삭제 |
 | `ha suggest` | 반복해서 입력한 셸 명령을 단축키 후보로 추천 |
 | `ha export [path]` | JSON 백업 |
 | `ha import <path>` | 백업에서 복원 (`--strategy merge\|replace`) |
@@ -149,7 +152,9 @@ OS와 패키지 매니저(brew / apt / dnf / winget / scoop)를 자동 감지해
 ha stats              # top 10 + 막대 그래프 + 마지막 사용 시점
 ha stats --top 5      # top 5 만
 ha stats --since 7d   # 최근 7일만 (또는 24h, 30m)
-ha stats --unused     # 한 번도 안 쓴 / 30일 이상 미사용
+ha stats --unused     # 한 번도 안 쓴 / 30일 이상 미사용 (명령어 + 등록일 함께 표시)
+ha unused             # 위 명령의 단축 버전
+ha unused --clean     # 체크박스로 선택해 일괄 삭제
 ```
 
 ### 출력 예시
@@ -230,6 +235,7 @@ halias 환경 점검
 ~/.halias/
 ├── shortcuts.json          # 단일 진실 공급원 (사람이 읽을 수 있는 JSON)
 ├── stats.log               # 사용 통계 원본 (timestamp + name + directory)
+├── config.json             # halias 설정 (선호 에디터 등)
 └── generated/
     └── aliases.sh          # 자동 생성, 셸이 source 함
 ```
@@ -242,13 +248,16 @@ halias 환경 점검
 
 검색 결과가 실제 사용 위치를 학습합니다. 현재 디렉토리에서 자주 쓰는 단축키가 수동 project scope 없이도 위로 올라옵니다.
 
+### v0.3.0 — 관리 & 편집 UX ✅
+
+- `ha unused` / `ha unused --clean` — 미사용 단축키 찾기 및 일괄 삭제
+- `ha rename` — 전체 편집 폼 없이 이름만 빠르게 변경
+- `ha list --tag` — 태그로 목록 필터
+- `ha edit` 에서 function 본문을 `$EDITOR` 로 편집, 에디터 자동 감지
+
 ### 다음 버전
 
-체크리스트 채우기보다는 **실 사용에서 발견되는 마찰점** 기반으로 진행합니다. 후보:
-
-- **명령 캡처** — `ha add --last` 로 최근 실행한 명령 저장
-- **정리** — 실제 사용 데이터를 기반으로 미사용/오래된/중복 단축키 찾기
-- **`$EDITOR` 모드** — 함수 본문을 vim/code 로 편집
+체크리스트 채우기보다는 **실 사용에서 발견되는 마찰점** 기반으로 진행합니다.
 
 이슈/제안은 [GitHub issues](https://github.com/hyukjunkwon/halias/issues) 환영합니다.
 

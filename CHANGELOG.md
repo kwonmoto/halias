@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-05-13
+
 ### Added
 
 - `ha stats --unused` now shows the command body and registration date alongside each unused shortcut, making it easier to decide what to remove.
@@ -24,10 +26,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - CLI and README positioning now describe halias as a personal command layer that learns from real shortcut usage.
 - `ha suggest` now filters common shell/session setup noise such as shell integration sourcing, virtualenv activation, `eval`, `export`, and `unset`.
+- Shortcut names now allow hyphens in non-leading positions (e.g. `git-status`).
 
 ### Fixed
 
-- `halias --version` now reports `0.2.0`, matching the package version.
+- `halias --version` now reports the correct package version.
+- `ha unused --clean` and editor picker now show a helpful message instead of crashing when stdin is not a TTY (e.g. inside IDE terminals).
+- GUI editors (`code`, `subl`, `zed`, etc.) automatically receive `--wait` flag so the terminal blocks until the file is closed.
 
 ## [0.2.0] - 2026-04-30
 

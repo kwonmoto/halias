@@ -77,9 +77,12 @@ hareload             # apply newly added shortcuts to current shell
 | `ha add` | Add a new shortcut interactively |
 | `ha add --last [name]` | Save the last shell command as a shortcut |
 | `ha edit [name]` | Edit an existing shortcut (picker if no name) |
-| `ha list` (= `ha ls`) | List shortcuts (`--sort name\|recent\|usage`) |
+| `ha rename [old] [new]` | Rename a shortcut without the full edit form |
+| `ha list` (= `ha ls`) | List shortcuts (`--sort name\|recent\|usage`, `--tag <tag>`) |
 | `ha rm [name]` | Delete a shortcut (extra confirm for frequently used) |
 | `ha stats` | Usage stats (top N, unused, time-filtered) |
+| `ha unused` | Show never-used and stale shortcuts |
+| `ha unused --clean` | Bulk-delete unused shortcuts interactively |
 | `ha suggest` | Suggest repeated shell commands worth saving |
 | `ha export [path]` | Back up shortcuts to JSON |
 | `ha import <path>` | Restore from backup (`--strategy merge\|replace`) |
@@ -146,7 +149,9 @@ It detects your OS and package manager (Homebrew, apt, dnf, winget, scoop) and o
 ha stats              # top 10 with bar chart
 ha stats --top 5
 ha stats --since 7d   # last 7 days only (also: 24h, 30m)
-ha stats --unused     # never-used + 30+ days idle
+ha stats --unused     # never-used + 30+ days idle (shows command + registration date)
+ha unused             # shorthand for the above
+ha unused --clean     # interactive checklist to bulk-delete unused shortcuts
 ```
 
 ```
@@ -212,6 +217,7 @@ halias environment check
 ~/.halias/
 ├── shortcuts.json          # source of truth (human-readable JSON)
 ├── stats.log               # raw usage log (timestamp + name + directory)
+├── config.json             # halias preferences (e.g. preferred editor)
 └── generated/
     └── aliases.sh          # auto-generated, sourced by your shell
 ```
@@ -224,13 +230,16 @@ Everything is plain text, version-controllable, and easy to back up.
 
 Search results now learn from where you actually use shortcuts. Shortcuts used in the current directory float to the top without manual project scopes.
 
+### v0.3.0 — Maintenance & editing UX ✅
+
+- `ha unused` / `ha unused --clean` — find and bulk-delete stale shortcuts
+- `ha rename` — rename without the full edit form
+- `ha list --tag` — filter list by tag
+- `ha edit` opens `$EDITOR` for function bodies; auto-detects installed editors
+
 ### Future versions
 
-Driven by real usage and friction discovered in daily work, not by feature checklists. Some likely candidates:
-
-- **Command capture** — save recently used commands with `ha add --last`
-- **Cleanup** — find unused, stale, or duplicate shortcuts from real usage data
-- **`$EDITOR` mode for function bodies** — edit multi-line functions in vim/code
+Driven by real usage and friction discovered in daily work, not by feature checklists.
 
 Suggestions and bug reports welcome via [issues](https://github.com/hyukjunkwon/halias/issues).
 
