@@ -1,10 +1,13 @@
+import * as p from '@clack/prompts';
 import chalk from 'chalk';
+import { runAddFromCommand } from './add.js';
 import { readStore } from '../core/store.js';
 import { readShellHistoryCommands } from '../lib/shell-history.js';
 
 interface SuggestOptions {
   top?: string;
   min?: string;
+  save?: boolean;
 }
 
 interface Suggestion {
@@ -25,6 +28,11 @@ export async function runSuggest(options: SuggestOptions = {}): Promise<void> {
 
   const existingCommands = new Set(store.shortcuts.map((shortcut) => normalizeCommand(shortcut.command)));
   const suggestions = collectSuggestions(historyCommands, existingCommands, minCount).slice(0, topN);
+
+  if (options.save) {
+    await selectAndSaveSuggestion(suggestions, minCount);
+    return;
+  }
 
   console.log();
 
@@ -49,8 +57,34 @@ export async function runSuggest(options: SuggestOptions = {}): Promise<void> {
   }
 
   console.log();
-  console.log(chalk.dim('  저장하려면: ') + chalk.cyan('ha add --last <name>') + chalk.dim(' 또는 ') + chalk.cyan('ha add'));
+  console.log(chalk.dim('  저장하려면: ') + chalk.cyan('ha suggest --save'));
   console.log();
+}
+
+async function selectAndSaveSuggestion(suggestions: Suggestion[], minCount: number): Promise<void> {
+  console.clear();
+  p.intro(chalk.bgCyan.black(' halias · 추천 후보 저장 '));
+
+  if (suggestions.length === 0) {
+    p.cancel(`최근 셸 history에서 ${minCount}회 이상 반복된 추천 후보가 없습니다.`);
+    return;
+  }
+
+  const selected = await p.select({
+    message: '어떤 명령을 단축키로 저장할까요?',
+    options: suggestions.map((suggestion) => ({
+      value: suggestion.command,
+      label: suggestion.command,
+      hint: `${suggestion.count}회`,
+    })),
+  });
+
+  if (p.isCancel(selected)) {
+    p.cancel('취소되었습니다.');
+    return;
+  }
+
+  await runAddFromCommand(undefined, String(selected), '선택한 후보 명령');
 }
 
 function collectSuggestions(

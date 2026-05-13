@@ -102,7 +102,8 @@ program
   .description('반복해서 입력한 셸 명령을 단축키 후보로 추천')
   .option('--top <n>', 'top N개 표시 (기본 10)', '10')
   .option('--min <n>', '추천에 필요한 최소 반복 횟수 (기본 3)', '3')
-  .action(async (options: { top?: string; min?: string }) => {
+  .option('--save', '추천 후보를 선택해서 바로 단축키로 저장')
+  .action(async (options: { top?: string; min?: string; save?: boolean }) => {
     await runSuggest(options);
   });
 

@@ -163,6 +163,7 @@ ha stats --unused     # never-used + 30+ days idle
 ha suggest           # repeated command candidates from recent shell history
 ha suggest --top 5
 ha suggest --min 4   # only commands repeated 4+ times
+ha suggest --save    # pick a suggestion and save it immediately
 ```
 
 ```
@@ -172,7 +173,7 @@ ha suggest --min 4   # only commands repeated 4+ times
    1.  12x  docker compose logs -f api
    2.   7x  git pull --rebase
 
-  To save one: ha add --last <name> or ha add
+  To save one: ha suggest --save
 ```
 
 Suggestions skip commands that are already saved as shortcuts, short one-off commands, and common navigation commands like `cd`, `ls`, and `pwd`.
@@ -227,7 +228,6 @@ Search results now learn from where you actually use shortcuts. Shortcuts used i
 Driven by real usage and friction discovered in daily work, not by feature checklists. Some likely candidates:
 
 - **Command capture** — save recently used commands with `ha add --last`
-- **Interactive suggestion save** — pick a `ha suggest` result and save it directly
 - **Cleanup** — find unused, stale, or duplicate shortcuts from real usage data
 - **`$EDITOR` mode for function bodies** — edit multi-line functions in vim/code
 

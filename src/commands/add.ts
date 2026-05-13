@@ -41,7 +41,7 @@ export async function runAdd(options: AddOptions = {}): Promise<void> {
       return;
     }
 
-    await runAddFromLastCommand(options.name, lastCommand, existingNames);
+    await runAddFromCommand(options.name, lastCommand, '직전에 실행한 명령', existingNames);
     return;
   }
 
@@ -122,16 +122,19 @@ export async function runAdd(options: AddOptions = {}): Promise<void> {
   await confirmAndSaveShortcut(shortcut);
 }
 
-async function runAddFromLastCommand(
+export async function runAddFromCommand(
   name: string | undefined,
   command: string,
-  existingNames: Set<string>,
+  noteTitle = '실행할 명령',
+  existingNames?: Set<string>,
 ): Promise<void> {
-  p.note(command, '직전에 실행한 명령');
+  const names = existingNames ?? new Set((await readStore()).shortcuts.map((shortcut) => shortcut.name));
+
+  p.note(command, noteTitle);
 
   let shortcutName = name;
   if (shortcutName) {
-    const nameError = validateShortcutName(shortcutName, existingNames);
+    const nameError = validateShortcutName(shortcutName, names);
     if (nameError) {
       throw new Error(nameError);
     }
@@ -139,7 +142,7 @@ async function runAddFromLastCommand(
     const promptedName = await p.text({
       message: '이 명령을 어떤 이름으로 저장할까요?',
       placeholder: 'dlog',
-      validate: (value) => validateShortcutName(value, existingNames),
+      validate: (value) => validateShortcutName(value, names),
     });
 
     if (p.isCancel(promptedName)) {

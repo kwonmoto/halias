@@ -170,6 +170,7 @@ ha stats --unused     # 한 번도 안 쓴 / 30일 이상 미사용
 ha suggest           # 최근 셸 history에서 반복 명령 후보 보기
 ha suggest --top 5
 ha suggest --min 4   # 4회 이상 반복된 명령만
+ha suggest --save    # 후보를 선택해서 즉시 저장
 ```
 
 ```
@@ -179,7 +180,7 @@ ha suggest --min 4   # 4회 이상 반복된 명령만
    1.  12회  docker compose logs -f api
    2.   7회  git pull --rebase
 
-  저장하려면: ha add --last <name> 또는 ha add
+  저장하려면: ha suggest --save
 ```
 
 이미 등록된 shortcut 명령, 짧은 일회성 명령, `cd`, `ls`, `pwd` 같은 이동/조회 명령은 추천에서 제외합니다.
@@ -244,7 +245,6 @@ halias 환경 점검
 체크리스트 채우기보다는 **실 사용에서 발견되는 마찰점** 기반으로 진행합니다. 후보:
 
 - **명령 캡처** — `ha add --last` 로 최근 실행한 명령 저장
-- **추천 후보 바로 저장** — `ha suggest` 결과를 선택해서 즉시 저장
 - **정리** — 실제 사용 데이터를 기반으로 미사용/오래된/중복 단축키 찾기
 - **`$EDITOR` 모드** — 함수 본문을 vim/code 로 편집
 
