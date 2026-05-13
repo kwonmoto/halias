@@ -2,16 +2,16 @@ import { ko } from '../locales/ko.js';
 import { en } from '../locales/en.js';
 import { getConfiguredLang } from '../core/config.js';
 
-let messages: typeof ko = ko;
+let messages: typeof ko = en;
 
 /**
  * Initialise the locale.
- * Priority: HALIAS_LANG env var → config.json lang field → 'ko' default.
+ * Priority: HALIAS_LANG env var → config.json lang field → 'en' default.
  * Call once at startup (in cli.ts before parseAsync).
  */
 export function initLocale(): void {
-  const lang = process.env['HALIAS_LANG'] ?? getConfiguredLang() ?? 'ko';
-  messages = lang === 'en' ? en : ko;
+  const lang = process.env['HALIAS_LANG'] ?? getConfiguredLang() ?? 'en';
+  messages = lang === 'ko' ? ko : en;
 }
 
 /**
