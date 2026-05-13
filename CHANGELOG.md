@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ha unused` shorthand command — equivalent to `ha stats --unused`, for quicker access.
 - `ha rename <old> <new>` renames a shortcut without going through the full edit form. Prompts interactively if arguments are omitted.
 - `ha list --tag <tag>` filters the shortcut list to a specific tag.
-- `ha edit` now opens `$EDITOR` (or `$VISUAL`) for function-type shortcuts, enabling proper multiline editing. Falls back to inline prompt if neither variable is set.
+- `ha edit` now opens `$EDITOR` (or `$VISUAL`) for function-type shortcuts, enabling proper multiline editing. If neither variable is set, halias detects installed editors (VSCode, Zed, Neovim, Vim, etc.) and prompts once to pick one — the choice is saved to `~/.halias/config.json`. Falls back to inline prompt if no editor is found.
 - `ha add --last [name]` can save the last shell command as a shortcut, making repeated long commands easier to capture without retyping.
 - `ha suggest` can surface repeated shell commands from recent history as shortcut candidates.
 - `ha suggest --save` lets you pick a suggested command and save it through the normal preview/confirmation flow.

@@ -1,12 +1,13 @@
 import * as p from '@clack/prompts';
 import chalk from 'chalk';
-import { spawnSync } from 'child_process';
+import { spawnSync, execSync } from 'child_process';
 import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { readStore, writeStore } from '../core/store.js';
 import { generateAliasesFile } from '../core/generator.js';
 import { ShortcutSchema, type Shortcut } from '../core/types.js';
+import { getConfiguredEditor, saveConfiguredEditor } from '../core/config.js';
 
 type ShortcutType = 'alias' | 'function';
 
@@ -194,15 +195,23 @@ async function editInline(current: string, _type: ShortcutType): Promise<string 
 }
 
 /**
- * function 타입: $EDITOR(또는 $VISUAL)로 임시 파일 열어 편집.
- * 에디터 미설정 시 Clack text 폴백.
+ * function 타입: 에디터로 임시 파일 열어 편집.
+ *
+ * 에디터 우선순위:
+ *   1. $VISUAL / $EDITOR 환경변수
+ *   2. ~/.halias/config.json 에 저장된 선택
+ *   3. 시스템에 설치된 에디터 자동 감지 → 선택 프롬프트 (선택 결과 저장)
+ *   4. 아무것도 없으면 인라인 폴백
+ *
  * 취소(빈 파일 저장) 시 null 반환.
  */
 async function editInEditor(current: string, shortcutName: string): Promise<string | null> {
-  const editor = process.env['VISUAL'] ?? process.env['EDITOR'];
+  const envEditor = process.env['VISUAL'] ?? process.env['EDITOR'];
+  const configEditor = getConfiguredEditor();
+  const editor = envEditor ?? configEditor ?? (await pickEditor());
 
   if (!editor) {
-    p.log.warn('$EDITOR 환경변수가 설정되지 않아 인라인 편집으로 전환합니다.');
+    p.log.warn('사용 가능한 에디터를 찾을 수 없어 인라인 편집으로 전환합니다.');
     const result = await p.text({
       message: '함수 본문 ($1, $2 사용 가능)',
       initialValue: current,
@@ -210,6 +219,12 @@ async function editInEditor(current: string, shortcutName: string): Promise<stri
     });
     if (p.isCancel(result)) return null;
     return result as string;
+  }
+
+  // 처음 감지된 에디터면 저장 (환경변수는 저장 안 함 — 사용자가 직접 설정한 것)
+  if (!envEditor && !configEditor) {
+    saveConfiguredEditor(editor);
+    p.log.success(`${chalk.cyan(editor)} 을 기본 에디터로 저장했습니다.`);
   }
 
   // 임시 파일 생성
@@ -246,6 +261,53 @@ async function editInEditor(current: string, shortcutName: string): Promise<stri
   }
 
   return body;
+}
+
+/** 시스템에 설치된 에디터 목록을 감지해 사용자가 선택하게 함. 취소 시 undefined. */
+async function pickEditor(): Promise<string | undefined> {
+  const candidates = [
+    { bin: 'code',  label: 'VSCode' },
+    { bin: 'zed',   label: 'Zed' },
+    { bin: 'subl',  label: 'Sublime Text' },
+    { bin: 'nvim',  label: 'Neovim' },
+    { bin: 'vim',   label: 'Vim' },
+    { bin: 'nano',  label: 'nano' },
+  ];
+
+  const available = candidates.filter(({ bin }) => {
+    try {
+      execSync(`command -v ${bin}`, { stdio: 'ignore' });
+      return true;
+    } catch {
+      return false;
+    }
+  });
+
+  if (available.length === 0) return undefined;
+
+  const options = [
+    ...available.map(({ bin, label }) => ({ value: bin, label, hint: bin })),
+    { value: '__custom__', label: '직접 입력', hint: '' },
+  ];
+
+  const selected = await p.select({
+    message: '함수 본문 편집에 사용할 에디터를 선택하세요 (한 번만 물어봅니다)',
+    options,
+  });
+
+  if (p.isCancel(selected)) return undefined;
+
+  if (selected === '__custom__') {
+    const custom = await p.text({
+      message: '에디터 경로 또는 명령어 입력',
+      placeholder: '/usr/local/bin/hx',
+      validate: (v) => (v ? undefined : '입력해주세요'),
+    });
+    if (p.isCancel(custom)) return undefined;
+    return custom as string;
+  }
+
+  return selected as string;
 }
 
 /**
