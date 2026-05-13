@@ -9,6 +9,7 @@ import { detectPackageManager, detectPlatform } from '../lib/platform.js';
 import { inspectShellHistory } from '../lib/shell-history.js';
 import { detectSystemCommandConflict } from '../lib/system-commands.js';
 import { readStore } from '../core/store.js';
+import { getConfiguredLang } from '../core/config.js';
 import { ALIASES_OUTPUT } from '../lib/paths.js';
 import { t } from '../lib/i18n.js';
 
@@ -43,6 +44,7 @@ export async function runDoctor(): Promise<void> {
   checks.push(await checkStoreIntegrity());
   checks.push(...(await checkDangerousShortcuts()));
   checks.push(await checkGeneratedFile());
+  checks.push(checkLang());
 
   printChecks(checks);
 
@@ -189,6 +191,15 @@ async function checkGeneratedFile(): Promise<CheckResult> {
       fix: t('doctor.aliasesWarnFix'),
     };
   }
+}
+
+function checkLang(): CheckResult {
+  const lang = getConfiguredLang() ?? 'en';
+  return {
+    level: 'info',
+    message: t('doctor.langCurrent', { lang }),
+    fix: t('doctor.langChangeFix'),
+  };
 }
 
 // ─── 출력 ──────────────────────────────────────────────

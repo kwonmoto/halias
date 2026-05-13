@@ -88,6 +88,7 @@ hareload             # apply newly added shortcuts to current shell
 | `ha export [path]` | Back up shortcuts to JSON |
 | `ha import <path>` | Restore from backup (`--strategy merge\|replace`) |
 | `ha import-rc [file]` | Import aliases and functions from `~/.zshrc` (auto-detected if omitted) |
+| `ha config lang [en\|ko]` | Get or set the UI language |
 | `ha install` | Add shell integration to `~/.zshrc` |
 | `ha doctor` | Diagnose your environment |
 

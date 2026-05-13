@@ -198,6 +198,8 @@ const _ko = {
     aliasesWarn: 'aliases.sh 미생성',
     aliasesWarnDetail: '단축키를 추가했거나 ha install 후에는 자동 생성되어야 합니다.',
     aliasesWarnFix: 'ha install 을 다시 실행하세요.',
+    langCurrent: '언어: {lang}',
+    langChangeFix: 'ha config lang <en|ko> 로 변경',
     summaryOk: '모든 항목 정상.',
     summaryErrors: '오류 {count}개',
     summaryWarnings: '경고 {count}개',
@@ -228,6 +230,8 @@ const _ko = {
     done: '셸 통합 설치 완료.',
     completionConfirm: '셸 자동완성도 설정할까요? ({hint} 으로 명령어·단축키 완성)',
     completionDone: '자동완성 설정 완료.',
+    langPrompt: 'UI 언어를 선택하세요 (나중에 ha config lang 으로 변경 가능)',
+    langSaved: '{lang} 언어로 설정됨.',
     outroHint: '새 터미널을 열거나 source {file} 로 적용하세요.',
   },
   exportCmd: {
@@ -275,6 +279,12 @@ const _ko = {
     customInputPrompt: '에디터 경로 또는 명령어 입력',
     customInputPlaceholder: '/usr/local/bin/hx',
     customInputRequired: '입력해주세요',
+  },
+  config: {
+    langHint: 'ha config lang <en|ko> 로 변경',
+    langInvalid: "지원하지 않는 언어: '{value}'. 사용 가능: {langs}",
+    langSaved: '{lang} 언어로 설정됨.',
+    langRestart: '다음 명령어 실행부터 적용됩니다.',
   },
   importRc: {
     intro: ' halias · rc 파일 import ',

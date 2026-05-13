@@ -23,6 +23,7 @@ import { runRename } from './commands/rename.js';
 import { runCompletion } from './commands/completion.js';
 import { runTags } from './commands/tags.js';
 import { runImportRc } from './commands/import-rc.js';
+import { runConfigLang } from './commands/config.js';
 
 initLocale();
 
@@ -152,6 +153,18 @@ program
   .action(async (tag?: string) => {
     await runTags(tag);
   });
+
+program
+  .command('config')
+  .description('halias 설정 보기')
+  .addCommand(
+    new (await import('commander')).Command('lang')
+      .description('UI 언어 설정 (en | ko). 값 없이 실행 시 현재 설정 표시.')
+      .argument('[value]', 'en 또는 ko')
+      .action(async (value?: string) => {
+        await runConfigLang(value);
+      })
+  );
 
 program
   .command('import-rc [file]')

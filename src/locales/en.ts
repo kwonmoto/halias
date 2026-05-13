@@ -1,8 +1,8 @@
 import type { Messages } from './ko.js';
 
 /**
- * English messages for halias.
- * Set HALIAS_LANG=en to activate.
+ * English messages for halias (default locale).
+ * Switch language with: ha config lang ko
  */
 export const en: Messages = {
   add: {
@@ -194,6 +194,8 @@ export const en: Messages = {
     aliasesWarn: 'aliases.sh not generated',
     aliasesWarnDetail: 'Should be auto-generated after adding shortcuts or running ha install.',
     aliasesWarnFix: 'Run ha install again.',
+    langCurrent: 'Language: {lang}',
+    langChangeFix: 'Change with: ha config lang <en|ko>',
     summaryOk: 'All checks passed.',
     summaryErrors: '{count} error(s)',
     summaryWarnings: '{count} warning(s)',
@@ -224,6 +226,8 @@ export const en: Messages = {
     done: 'Shell integration installed.',
     completionConfirm: 'Also set up shell completion? ({hint} to complete commands and shortcuts)',
     completionDone: 'Completion configured.',
+    langPrompt: 'Select UI language (can be changed later with ha config lang)',
+    langSaved: 'Language set to {lang}.',
     outroHint: 'Open a new terminal or run: source {file}',
   },
   exportCmd: {
@@ -271,6 +275,12 @@ export const en: Messages = {
     customInputPrompt: 'Enter editor path or command',
     customInputPlaceholder: '/usr/local/bin/hx',
     customInputRequired: 'Please enter a value',
+  },
+  config: {
+    langHint: 'Change with: ha config lang <en|ko>',
+    langInvalid: "Unsupported language: '{value}'. Available: {langs}",
+    langSaved: 'Language set to {lang}.',
+    langRestart: 'Takes effect from the next command.',
   },
   importRc: {
     intro: ' halias · import from rc file ',

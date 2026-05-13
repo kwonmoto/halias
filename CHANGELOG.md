@@ -12,7 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ha completion zsh` / `ha completion bash` outputs a shell completion script. Enables tab-completing commands and shortcut names (`ha edit <tab>`, `ha rm <tab>`, etc.).
 - `ha install` now also offers to set up shell completion in one step.
 - `ha add` now opens `$EDITOR` for function-type shortcuts, consistent with `ha edit`.
-- i18n support: English (default) and Korean (`HALIAS_LANG=ko` or set via `~/.halias/config.json`). All user-facing messages are now translatable.
+- i18n support: English (default) and Korean. Set with `ha config lang ko`; `ha install` prompts for language on first run; `ha doctor` shows current language.
+- `ha config lang [en|ko]` — get or set the UI language, persisted to `~/.halias/config.json`.
 - `ha tags [tag]` shows all tags in use with their shortcut counts. Selecting a tag in interactive mode filters the shortcut list. Passing a tag argument directly jumps to the filtered view.
 - `ha import-rc [file]` parses aliases and single-line functions from `~/.zshrc` (or any rc file) and lets you pick which ones to bring into halias. Skips entries already registered and the halias-managed block.
 

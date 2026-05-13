@@ -6,11 +6,11 @@ let messages: typeof ko = en;
 
 /**
  * Initialise the locale.
- * Priority: HALIAS_LANG env var → config.json lang field → 'en' default.
+ * Priority: config.json lang field → 'en' default.
  * Call once at startup (in cli.ts before parseAsync).
  */
 export function initLocale(): void {
-  const lang = process.env['HALIAS_LANG'] ?? getConfiguredLang() ?? 'en';
+  const lang = getConfiguredLang() ?? 'en';
   messages = lang === 'ko' ? ko : en;
 }
 

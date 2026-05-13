@@ -6,6 +6,7 @@ import * as p from '@clack/prompts';
 import { ALIASES_OUTPUT } from '../lib/paths.js';
 import { generateAliasesFile } from '../core/generator.js';
 import { readStore } from '../core/store.js';
+import { getConfiguredLang, saveConfiguredLang } from '../core/config.js';
 import { completionSourceLine, type Shell } from './completion.js';
 import { t } from '../lib/i18n.js';
 
@@ -78,6 +79,23 @@ export async function runInstall(): Promise<void> {
       const completionBlock = `\n${HALIAS_COMPLETION_MARKER}\n${completionSourceLine(shell as Shell)}\n`;
       await fs.appendFile(rcFile, completionBlock, 'utf-8');
       p.log.success(t('install.completionDone'));
+    }
+  }
+
+  // 언어 설정 (아직 설정 안 된 경우만)
+  if (!getConfiguredLang()) {
+    const langConfirm = await p.select({
+      message: t('install.langPrompt'),
+      options: [
+        { value: 'en', label: 'English', hint: 'default' },
+        { value: 'ko', label: '한국어 (Korean)' },
+      ],
+      initialValue: 'en',
+    });
+
+    if (!p.isCancel(langConfirm) && langConfirm !== 'en') {
+      saveConfiguredLang(langConfirm as string);
+      p.log.success(t('install.langSaved', { lang: chalk.cyan(langConfirm as string) }));
     }
   }
 

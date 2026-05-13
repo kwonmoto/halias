@@ -88,6 +88,7 @@ hareload             # 새 단축키를 현재 셸에 즉시 반영
 | `ha export [path]` | JSON 백업 |
 | `ha import <path>` | 백업에서 복원 (`--strategy merge\|replace`) |
 | `ha import-rc [파일]` | `~/.zshrc` 등 rc 파일에서 alias / 함수 가져오기 (파일 미지정 시 자동 감지) |
+| `ha config lang [en\|ko]` | UI 언어 설정 확인 / 변경 |
 | `ha install` | `~/.zshrc` 에 셸 통합 추가 |
 | `ha doctor` | 환경 점검 (fzf, 셸 통합, 위험 단축키 등) |
 
