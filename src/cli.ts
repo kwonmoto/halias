@@ -22,6 +22,7 @@ import { runSuggest } from './commands/suggest.js';
 import { runRename } from './commands/rename.js';
 import { runCompletion } from './commands/completion.js';
 import { runTags } from './commands/tags.js';
+import { runImportRc } from './commands/import-rc.js';
 
 initLocale();
 
@@ -150,6 +151,13 @@ program
   .description('태그 목록 보기 / 태그 지정 시 해당 단축키 필터')
   .action(async (tag?: string) => {
     await runTags(tag);
+  });
+
+program
+  .command('import-rc [file]')
+  .description('~/.zshrc 등 rc 파일에서 alias / 함수를 가져오기 (파일 미지정 시 자동 감지)')
+  .action(async (file?: string) => {
+    await runImportRc(file);
   });
 
 program
