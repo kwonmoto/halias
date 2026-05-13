@@ -1,6 +1,6 @@
 # halias
 
-> Hyper alias — 셸 단축키를 GUI처럼 편하게 관리하세요. `.zshrc` 한 번만 건드리고 그 다음부턴 CLI로 끝.
+> Hyper alias — 실제 작업 습관을 학습하는 개인용 command layer. `.zshrc` 를 반복해서 열지 않고 셸 단축키를 저장, 검색, 편집, 추적, 백업하세요.
 
 📖 [English README](./README.md) · 한국어
 
@@ -10,9 +10,11 @@
 
 ## 무엇이 다른가요?
 
-기존 alias 관리는 `~/.zshrc` 를 매번 열어 편집해야 했습니다. **halias** 는 그걸 앱처럼 만들었어요:
+기존 alias 관리는 `~/.zshrc` 를 매번 열어 편집해야 했습니다. **halias** 는 그걸 개인용 command layer 처럼 만들었어요:
 
 - 🎯 **컨텍스트 인식 정렬** — 이 디렉토리에서 자주 쓴 단축키가 검색 상단에. 수동 그룹핑 불필요.
+- ⚡ **직전 명령 저장** (`ha add --last <name>`) — 방금 실행한 명령을 바로 재사용 가능한 단축키로 저장
+- 💡 **단축키 후보 추천** (`ha suggest`) — 반복해서 친 셸 명령을 alias 후보로 찾기
 - ✨ **대화형 추가** (`ha add`) — 입력만으로 안전하게 등록, 미리보기로 안심
 - 🔍 **퍼지 검색** (`ha`) — 이름·명령·태그·설명 모두에 대해 fzf로 즉시 검색
 - 📊 **자동 통계** — 모든 단축키가 wrapper 함수로 생성되어 사용 빈도 자동 추적
@@ -48,6 +50,10 @@ ha add
 #   ◇ 설명 (선택)       현재 git 상태 확인
 #   ◇ 태그 (선택)       git
 
+# 또는 방금 실행한 명령을 바로 저장
+docker compose logs -f api
+ha add --last dlog
+
 # 2. 셸 통합 추가 (최초 1회)
 ha install
 
@@ -69,10 +75,12 @@ hareload             # 새 단축키를 현재 셸에 즉시 반영
 | `ha` (인자 없이) | 퍼지 검색 — 등록된 단축키 빠르게 찾기 |
 | `ha search` (= `ha s`) | 위와 동일, 명시적 호출 |
 | `ha add` | 대화형으로 새 단축키 추가 |
+| `ha add --last [name]` | 직전에 실행한 셸 명령을 단축키로 저장 |
 | `ha edit [name]` | 기존 단축키 편집 (이름 없으면 선택 화면) |
 | `ha list` (= `ha ls`) | 단축키 목록 (`--sort name\|recent\|usage`) |
 | `ha rm [name]` | 단축키 삭제 (자주 쓰는 거면 추가 확인) |
 | `ha stats` | 사용 통계 (top N, 미사용, 기간 필터) |
+| `ha suggest` | 반복해서 입력한 셸 명령을 단축키 후보로 추천 |
 | `ha export [path]` | JSON 백업 |
 | `ha import <path>` | 백업에서 복원 (`--strategy merge\|replace`) |
 | `ha install` | `~/.zshrc` 에 셸 통합 추가 |
@@ -156,6 +164,26 @@ ha stats --unused     # 한 번도 안 쓴 / 30일 이상 미사용
 
 데이터는 `ha install` 시 자동 등록되는 `_halias_track` 함수가 매 호출마다 `~/.halias/stats.log` 에 append합니다. 별도 설정 불필요.
 
+## 추천
+
+```bash
+ha suggest           # 최근 셸 history에서 반복 명령 후보 보기
+ha suggest --top 5
+ha suggest --min 4   # 4회 이상 반복된 명령만
+```
+
+```
+  단축키 후보
+  최근 셸 history에서 3회 이상 반복된 명령입니다.
+
+   1.  12회  docker compose logs -f api
+   2.   7회  git pull --rebase
+
+  저장하려면: ha add --last <name> 또는 ha add
+```
+
+이미 등록된 shortcut 명령, 짧은 일회성 명령, `cd`, `ls`, `pwd` 같은 이동/조회 명령은 추천에서 제외합니다.
+
 ## 백업 / 복원
 
 ```bash
@@ -198,7 +226,7 @@ halias 환경 점검
 ```
 ~/.halias/
 ├── shortcuts.json          # 단일 진실 공급원 (사람이 읽을 수 있는 JSON)
-├── stats.log               # 사용 통계 원본 (timestamp + name)
+├── stats.log               # 사용 통계 원본 (timestamp + name + directory)
 └── generated/
     └── aliases.sh          # 자동 생성, 셸이 source 함
 ```
@@ -207,17 +235,18 @@ halias 환경 점검
 
 ## 로드맵
 
-### v0.1.0 — 첫 릴리즈 ✅
+### v0.2.0 — 컨텍스트 인식 검색 ✅
 
-개인 alias 관리에 필요한 모든 게 들어있습니다: 코어 CRUD, 퍼지 검색, 사용 통계, 백업/복원, 환경 점검까지.
+검색 결과가 실제 사용 위치를 학습합니다. 현재 디렉토리에서 자주 쓰는 단축키가 수동 project scope 없이도 위로 올라옵니다.
 
 ### 다음 버전
 
 체크리스트 채우기보다는 **실 사용에서 발견되는 마찰점** 기반으로 진행합니다. 후보:
 
-- **첫 실행 시 onboarding** — 처음 `ha` 입력 시 install 안내
+- **명령 캡처** — `ha add --last` 로 최근 실행한 명령 저장
+- **추천 후보 바로 저장** — `ha suggest` 결과를 선택해서 즉시 저장
+- **정리** — 실제 사용 데이터를 기반으로 미사용/오래된/중복 단축키 찾기
 - **`$EDITOR` 모드** — 함수 본문을 vim/code 로 편집
-- **검색 결과 사용 빈도순 정렬**
 
 이슈/제안은 [GitHub issues](https://github.com/hyukjunkwon/halias/issues) 환영합니다.
 

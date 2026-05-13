@@ -3,9 +3,15 @@ import chalk from 'chalk';
 import { addShortcut, readStore } from '../core/store.js';
 import { generateAliasesFile } from '../core/generator.js';
 import { ShortcutSchema, type Shortcut } from '../core/types.js';
+import { readLastShellCommand } from '../lib/shell-history.js';
 import { detectSystemCommandConflict } from '../lib/system-commands.js';
 
 type ShortcutType = 'alias' | 'function';
+
+interface AddOptions {
+  name?: string;
+  last?: boolean;
+}
 
 interface AddFormResult {
   name: string;
@@ -21,12 +27,23 @@ interface AddFormResult {
  * 이 명령어가 halias의 첫인상이자 핵심 UX.
  * 4단계로 부담 없이 입력받고, 마지막에 미리보기로 안심시킨다.
  */
-export async function runAdd(): Promise<void> {
+export async function runAdd(options: AddOptions = {}): Promise<void> {
   console.clear();
-  p.intro(chalk.bgCyan.black(' halias · 새 단축키 추가 '));
+  p.intro(chalk.bgCyan.black(options.last ? ' halias · 직전 명령 저장 ' : ' halias · 새 단축키 추가 '));
 
   const store = await readStore();
   const existingNames = new Set(store.shortcuts.map((s) => s.name));
+
+  if (options.last) {
+    const lastCommand = await readLastShellCommand();
+    if (!lastCommand) {
+      p.cancel('직전에 실행한 명령을 찾지 못했습니다. 셸 history 설정을 확인해주세요.');
+      return;
+    }
+
+    await runAddFromLastCommand(options.name, lastCommand, existingNames);
+    return;
+  }
 
   const result = (await p.group(
     {
@@ -34,15 +51,7 @@ export async function runAdd(): Promise<void> {
         p.text({
           message: '단축키 이름은? (예: gs, mkcd)',
           placeholder: 'gs',
-          validate: (value) => {
-            if (!value) return '이름을 입력해주세요';
-            if (existingNames.has(value)) return `이미 존재합니다: ${value}`;
-            const parsed = ShortcutSchema.shape.name.safeParse(value);
-            if (!parsed.success) {
-              return parsed.error.issues[0]?.message ?? '잘못된 형식';
-            }
-            return undefined;
-          },
+          validate: (value) => validateShortcutName(value, existingNames),
         }),
 
       type: () =>
@@ -63,8 +72,8 @@ export async function runAdd(): Promise<void> {
           initialValue: 'alias',
         }),
 
-      command: ({ results }) =>
-        p.text({
+      command: ({ results }) => {
+        return p.text({
           message:
             results.type === 'alias'
               ? '실행할 명령어는? (예: git status)'
@@ -72,7 +81,8 @@ export async function runAdd(): Promise<void> {
           placeholder:
             results.type === 'alias' ? 'git status' : 'mkdir -p "$1" && cd "$1"',
           validate: (v) => (v ? undefined : '명령어를 입력해주세요'),
-        }),
+        });
+      },
 
       description: () =>
         p.text({
@@ -109,6 +119,86 @@ export async function runAdd(): Promise<void> {
     updatedAt: now,
   };
 
+  await confirmAndSaveShortcut(shortcut);
+}
+
+async function runAddFromLastCommand(
+  name: string | undefined,
+  command: string,
+  existingNames: Set<string>,
+): Promise<void> {
+  p.note(command, '직전에 실행한 명령');
+
+  let shortcutName = name;
+  if (shortcutName) {
+    const nameError = validateShortcutName(shortcutName, existingNames);
+    if (nameError) {
+      throw new Error(nameError);
+    }
+  } else {
+    const promptedName = await p.text({
+      message: '이 명령을 어떤 이름으로 저장할까요?',
+      placeholder: 'dlog',
+      validate: (value) => validateShortcutName(value, existingNames),
+    });
+
+    if (p.isCancel(promptedName)) {
+      p.cancel('취소되었습니다.');
+      return;
+    }
+
+    shortcutName = promptedName;
+  }
+
+  const description = await p.text({
+    message: '설명 (선택)',
+    placeholder: '엔터로 건너뛰기',
+  });
+
+  if (p.isCancel(description)) {
+    p.cancel('취소되었습니다.');
+    return;
+  }
+
+  const tags = await p.text({
+    message: '태그 (쉼표로 구분, 선택)',
+    placeholder: 'docker, logs',
+  });
+
+  if (p.isCancel(tags)) {
+    p.cancel('취소되었습니다.');
+    return;
+  }
+
+  const now = new Date().toISOString();
+  const shortcut: Shortcut = {
+    name: shortcutName,
+    command,
+    type: 'alias',
+    description: description || undefined,
+    tags: tags
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean),
+    source: 'personal',
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  await confirmAndSaveShortcut(shortcut);
+}
+
+function validateShortcutName(value: string | undefined, existingNames: Set<string>): string | undefined {
+  if (!value) return '이름을 입력해주세요';
+  if (existingNames.has(value)) return `이미 존재합니다: ${value}`;
+  const parsed = ShortcutSchema.shape.name.safeParse(value);
+  if (!parsed.success) {
+    return parsed.error.issues[0]?.message ?? '잘못된 형식';
+  }
+  return undefined;
+}
+
+async function confirmAndSaveShortcut(shortcut: Shortcut): Promise<void> {
   // 미리보기로 사용자에게 어떻게 생성될지 보여주기
   const preview =
     shortcut.type === 'alias'

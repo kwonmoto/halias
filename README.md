@@ -1,6 +1,6 @@
 # halias
 
-> Hyper alias — manage shell aliases and functions through an interactive CLI. Search, edit, track usage, and back up — without ever touching `.zshrc`.
+> Hyper alias — a personal command layer that learns from how you actually work. Save, search, edit, track, and back up shell shortcuts without repeatedly touching `.zshrc`.
 
 📖 English · [한국어 README](./README.ko.md)
 
@@ -10,9 +10,11 @@
 
 ## What's different?
 
-Managing shell aliases used to mean editing `.zshrc` by hand. **halias** turns it into an app:
+Managing shell aliases used to mean editing `.zshrc` by hand. **halias** turns it into a personal command layer:
 
 - 🎯 **Context-aware ranking** — shortcuts you use in this directory float to the top of search. No manual grouping required.
+- ⚡ **Save the last command** (`ha add --last <name>`) — turn the command you just ran into a reusable shortcut.
+- 💡 **Shortcut suggestions** (`ha suggest`) — find repeated shell commands that are good alias candidates.
 - ✨ **Interactive add** (`ha add`) — Clack-powered TUI ...
 - 🔍 **Fuzzy search** (`ha`) — fzf integration searches across name, command, tags, and description
 - 📊 **Auto stats** — every shortcut is generated as a wrapper function, so usage is tracked automatically
@@ -48,6 +50,10 @@ ha add
 #   ◇ Description?  show working tree status   (optional)
 #   ◇ Tags?         git                        (optional)
 
+# Or save the command you just ran
+docker compose logs -f api
+ha add --last dlog
+
 # 2. Install shell integration (one-time setup)
 ha install
 
@@ -69,10 +75,12 @@ hareload             # apply newly added shortcuts to current shell
 | `ha` (no args) | Fuzzy search — find shortcuts fast |
 | `ha search` (= `ha s`) | Same as above, explicit |
 | `ha add` | Add a new shortcut interactively |
+| `ha add --last [name]` | Save the last shell command as a shortcut |
 | `ha edit [name]` | Edit an existing shortcut (picker if no name) |
 | `ha list` (= `ha ls`) | List shortcuts (`--sort name\|recent\|usage`) |
 | `ha rm [name]` | Delete a shortcut (extra confirm for frequently used) |
 | `ha stats` | Usage stats (top N, unused, time-filtered) |
+| `ha suggest` | Suggest repeated shell commands worth saving |
 | `ha export [path]` | Back up shortcuts to JSON |
 | `ha import <path>` | Restore from backup (`--strategy merge\|replace`) |
 | `ha install` | Add shell integration to `~/.zshrc` |
@@ -149,6 +157,26 @@ ha stats --unused     # never-used + 30+ days idle
    3.  mkcd  2  ▇▇▇▇▇▇▇▇              last: 30 min ago
 ```
 
+## Suggestions
+
+```bash
+ha suggest           # repeated command candidates from recent shell history
+ha suggest --top 5
+ha suggest --min 4   # only commands repeated 4+ times
+```
+
+```
+  Shortcut candidates
+  Commands repeated 3+ times in recent shell history.
+
+   1.  12x  docker compose logs -f api
+   2.   7x  git pull --rebase
+
+  To save one: ha add --last <name> or ha add
+```
+
+Suggestions skip commands that are already saved as shortcuts, short one-off commands, and common navigation commands like `cd`, `ls`, and `pwd`.
+
 ## Backup & restore
 
 ```bash
@@ -181,7 +209,7 @@ halias environment check
 ```
 ~/.halias/
 ├── shortcuts.json          # source of truth (human-readable JSON)
-├── stats.log               # raw usage log (timestamp + name)
+├── stats.log               # raw usage log (timestamp + name + directory)
 └── generated/
     └── aliases.sh          # auto-generated, sourced by your shell
 ```
@@ -190,18 +218,18 @@ Everything is plain text, version-controllable, and easy to back up.
 
 ## Roadmap
 
-### v0.1.0 — Initial release ✅
+### v0.2.0 — Context-aware search ✅
 
-The first version ships with everything you need for personal alias management:
-core CRUD, fuzzy search, usage stats, backup/restore, and an environment doctor.
+Search results now learn from where you actually use shortcuts. Shortcuts used in the current directory float to the top without manual project scopes.
 
 ### Future versions
 
 Driven by real usage and friction discovered in daily work, not by feature checklists. Some likely candidates:
 
-- **First-run onboarding** — auto-suggest `ha install` on first invocation
+- **Command capture** — save recently used commands with `ha add --last`
+- **Interactive suggestion save** — pick a `ha suggest` result and save it directly
+- **Cleanup** — find unused, stale, or duplicate shortcuts from real usage data
 - **`$EDITOR` mode for function bodies** — edit multi-line functions in vim/code
-- **Search results sorted by usage frequency**
 
 Suggestions and bug reports welcome via [issues](https://github.com/hyukjunkwon/halias/issues).
 

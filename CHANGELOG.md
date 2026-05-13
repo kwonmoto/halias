@@ -5,6 +5,21 @@ All notable changes to halias will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `ha add --last [name]` can save the last shell command as a shortcut, making repeated long commands easier to capture without retyping.
+- `ha suggest` can surface repeated shell commands from recent history as shortcut candidates.
+
+### Changed
+
+- CLI and README positioning now describe halias as a personal command layer that learns from real shortcut usage.
+
+### Fixed
+
+- `halias --version` now reports `0.2.0`, matching the package version.
+
 ## [0.2.0] - 2026-04-30
 
 ### Added

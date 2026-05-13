@@ -17,13 +17,14 @@ import { runDoctor } from './commands/doctor.js';
 import { runStats } from './commands/stats.js';
 import { runEdit } from './commands/edit.js';
 import { runExport, runImport } from './commands/export-import.js';
+import { runSuggest } from './commands/suggest.js';
 
 const program = new Command();
 
 program
   .name('halias')
-  .description('Shortcut manager for your terminal — manage aliases, share with team, track usage.')
-  .version('0.1.0');
+  .description('Personal command layer for your terminal — save, search, and learn from shell shortcuts.')
+  .version('0.2.0');
 
 // 디폴트 액션: 'ha' 만 입력 시 퍼지 검색.
 // commander는 서브 명령이 매치되지 않을 때 이 action을 실행함.
@@ -41,10 +42,11 @@ program
   });
 
 program
-  .command('add')
+  .command('add [name]')
   .description('새 단축키를 대화형으로 추가')
-  .action(async () => {
-    await runAdd();
+  .option('--last', '직전에 실행한 셸 명령을 단축키로 추가')
+  .action(async (name: string | undefined, options: { last?: boolean }) => {
+    await runAdd({ name, last: options.last });
   });
 
 program
@@ -93,6 +95,15 @@ program
   .option('--unused', '한 번도 안 쓴/오래 안 쓴 단축키만 표시')
   .action(async (options: { top?: string; since?: string; unused?: boolean }) => {
     await runStats(options);
+  });
+
+program
+  .command('suggest')
+  .description('반복해서 입력한 셸 명령을 단축키 후보로 추천')
+  .option('--top <n>', 'top N개 표시 (기본 10)', '10')
+  .option('--min <n>', '추천에 필요한 최소 반복 횟수 (기본 3)', '3')
+  .action(async (options: { top?: string; min?: string }) => {
+    await runSuggest(options);
   });
 
 program
