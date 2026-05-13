@@ -99,6 +99,14 @@ program
   });
 
 program
+  .command('unused')
+  .description('안 쓰는 단축키 표시 (ha stats --unused 단축 명령)')
+  .option('--clean', '선택해서 일괄 삭제')
+  .action(async (options: { clean?: boolean }) => {
+    await runStats({ unused: true, clean: options.clean });
+  });
+
+program
   .command('suggest')
   .description('반복해서 입력한 셸 명령을 단축키 후보로 추천')
   .option('--top <n>', 'top N개 표시 (기본 10)', '10')

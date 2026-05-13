@@ -146,7 +146,7 @@ async function printUnused(
   }
 
   const total = neverUsed.length + staleEntries.length;
-  console.log(chalk.dim(`  정리하려면: `) + chalk.cyan('ha rm <name>') + chalk.dim(`  또는  `) + chalk.cyan(`ha stats --unused --clean`) + chalk.dim(`  (${total}개 일괄 정리)`));
+  console.log(chalk.dim(`  정리하려면: `) + chalk.cyan('ha rm <name>') + chalk.dim(`  또는  `) + chalk.cyan(`ha unused --clean`) + chalk.dim(`  (${total}개 일괄 정리)`));
   console.log();
 }
 
