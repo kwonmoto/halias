@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `ha stats --unused` now shows the command body and registration date alongside each unused shortcut, making it easier to decide what to remove.
+- `ha stats --unused --clean` opens an interactive checklist to bulk-delete unused and stale shortcuts in one step.
 - `ha add --last [name]` can save the last shell command as a shortcut, making repeated long commands easier to capture without retyping.
 - `ha suggest` can surface repeated shell commands from recent history as shortcut candidates.
 - `ha suggest --save` lets you pick a suggested command and save it through the normal preview/confirmation flow.

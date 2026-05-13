@@ -93,7 +93,8 @@ program
   .option('--top <n>', 'top N개 표시 (기본 10)', '10')
   .option('--since <period>', "기간 필터 (예: '7d', '24h', '30m')")
   .option('--unused', '한 번도 안 쓴/오래 안 쓴 단축키만 표시')
-  .action(async (options: { top?: string; since?: string; unused?: boolean }) => {
+  .option('--clean', '--unused 목록에서 선택해 일괄 삭제 (--unused와 함께 사용)')
+  .action(async (options: { top?: string; since?: string; unused?: boolean; clean?: boolean }) => {
     await runStats(options);
   });
 

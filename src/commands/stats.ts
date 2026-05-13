@@ -1,10 +1,15 @@
+import * as p from '@clack/prompts';
 import chalk from 'chalk';
 import { aggregateStats } from '../core/stats.js';
-import { readStore } from '../core/store.js';
+import { readStore, writeStore } from '../core/store.js';
+import { generateAliasesFile } from '../core/generator.js';
+import type { Shortcut } from '../core/types.js';
 
 export interface StatsOptions {
   /** 안 쓰는 단축키 모드 */
   unused?: boolean;
+  /** --unused 목록에서 바로 일괄 삭제 */
+  clean?: boolean;
   /** 최근 N일만 집계 (예: '7d' → 최근 7일) */
   since?: string;
   /** top N (기본 10) */
@@ -27,7 +32,11 @@ export async function runStats(options: StatsOptions = {}): Promise<void> {
   const [agg, store] = await Promise.all([aggregateStats({ since }), readStore()]);
 
   if (options.unused) {
-    printUnused(agg, store);
+    if (options.clean) {
+      await runClean(agg, store);
+    } else {
+      await printUnused(agg, store.shortcuts);
+    }
     return;
   }
 
@@ -82,17 +91,21 @@ function printTop(
   console.log();
 }
 
-function printUnused(
+async function printUnused(
   agg: { byShortcut: { name: string; lastUsed: Date | null }[] },
-  store: { shortcuts: { name: string }[] },
-): void {
-  const usedNames = new Set(agg.byShortcut.map((e) => e.name));
-  const neverUsed = store.shortcuts.filter((s) => !usedNames.has(s.name));
+  shortcuts: Shortcut[],
+): Promise<void> {
+  const usedMap = new Map(agg.byShortcut.map((e) => [e.name, e.lastUsed]));
+  const neverUsed = shortcuts.filter((s) => !usedMap.has(s.name));
 
   const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
-  const staleEntries = agg.byShortcut.filter(
-    (e) => e.lastUsed && e.lastUsed.getTime() < thirtyDaysAgo,
-  );
+  const staleEntries = agg.byShortcut
+    .filter((e) => e.lastUsed && e.lastUsed.getTime() < thirtyDaysAgo)
+    .map((e) => ({
+      shortcut: shortcuts.find((s) => s.name === e.name),
+      lastUsed: e.lastUsed,
+    }))
+    .filter((e): e is { shortcut: Shortcut; lastUsed: Date } => e.shortcut !== undefined && e.lastUsed !== null);
 
   console.log();
 
@@ -102,11 +115,20 @@ function printUnused(
     return;
   }
 
+  const maxNameLen = Math.max(
+    ...neverUsed.map((s) => s.name.length),
+    ...staleEntries.map((e) => e.shortcut.name.length),
+    4,
+  );
+
   if (neverUsed.length > 0) {
     console.log(chalk.bold(`  한 번도 안 쓴 단축키 (${neverUsed.length}개)`));
     console.log();
     for (const s of neverUsed) {
-      console.log('    ' + chalk.dim('•') + ' ' + chalk.yellow(s.name));
+      const name = chalk.yellow(s.name.padEnd(maxNameLen));
+      const cmd = chalk.dim(truncate(s.command, 40));
+      const created = chalk.dim(`등록: ${formatRelative(new Date(s.createdAt))}`);
+      console.log(`    ${chalk.dim('•')} ${name}  ${cmd}  ${created}`);
     }
     console.log();
   }
@@ -115,14 +137,97 @@ function printUnused(
     console.log(chalk.bold(`  30일 이상 미사용 (${staleEntries.length}개)`));
     console.log();
     for (const e of staleEntries) {
-      const ago = e.lastUsed ? formatRelative(e.lastUsed) : '알 수 없음';
-      console.log('    ' + chalk.dim('•') + ' ' + chalk.yellow(e.name) + chalk.dim(`  (마지막: ${ago})`));
+      const name = chalk.yellow(e.shortcut.name.padEnd(maxNameLen));
+      const cmd = chalk.dim(truncate(e.shortcut.command, 40));
+      const last = chalk.dim(`마지막: ${formatRelative(e.lastUsed)}`);
+      console.log(`    ${chalk.dim('•')} ${name}  ${cmd}  ${last}`);
     }
     console.log();
   }
 
-  console.log(chalk.dim('  정리하려면: ') + chalk.cyan('ha rm <name>'));
+  const total = neverUsed.length + staleEntries.length;
+  console.log(chalk.dim(`  정리하려면: `) + chalk.cyan('ha rm <name>') + chalk.dim(`  또는  `) + chalk.cyan(`ha stats --unused --clean`) + chalk.dim(`  (${total}개 일괄 정리)`));
   console.log();
+}
+
+/**
+ * --unused --clean 모드: 안 쓰는 단축키를 체크박스로 선택해 일괄 삭제.
+ */
+async function runClean(
+  agg: { byShortcut: { name: string; lastUsed: Date | null }[] },
+  store: { shortcuts: Shortcut[]; version: 1 },
+): Promise<void> {
+  const usedMap = new Map(agg.byShortcut.map((e) => [e.name, e.lastUsed]));
+  const neverUsed = store.shortcuts.filter((s) => !usedMap.has(s.name));
+
+  const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+  const staleEntries = agg.byShortcut
+    .filter((e) => e.lastUsed && e.lastUsed.getTime() < thirtyDaysAgo)
+    .map((e) => ({
+      shortcut: store.shortcuts.find((s) => s.name === e.name),
+      lastUsed: e.lastUsed,
+    }))
+    .filter((e): e is { shortcut: Shortcut; lastUsed: Date } => e.shortcut !== undefined && e.lastUsed !== null);
+
+  const candidates = [
+    ...neverUsed.map((s) => ({ shortcut: s, reason: '미사용' as const })),
+    ...staleEntries.map((e) => ({ shortcut: e.shortcut, reason: '장기미사용' as const })),
+  ];
+
+  if (candidates.length === 0) {
+    console.log();
+    console.log(chalk.green('  ✓ 정리할 단축키가 없습니다.'));
+    console.log();
+    return;
+  }
+
+  console.log();
+  p.intro(chalk.bgYellow.black(' halias · 미사용 단축키 정리 '));
+
+  const options = candidates.map((c) => ({
+    value: c.shortcut.name,
+    label: c.shortcut.name,
+    hint: `${c.reason === '미사용' ? '한 번도 안 씀' : '30일 이상 미사용'}  ${truncate(c.shortcut.command, 35)}`,
+  }));
+
+  const selected = await p.multiselect({
+    message: '삭제할 단축키 선택 (스페이스: 선택, 엔터: 확인)',
+    options,
+    required: false,
+  });
+
+  if (p.isCancel(selected)) {
+    p.cancel('취소되었습니다.');
+    return;
+  }
+
+  const names = selected as string[];
+  if (names.length === 0) {
+    p.outro(chalk.dim('선택된 항목이 없습니다.'));
+    return;
+  }
+
+  const confirm = await p.confirm({
+    message: `${names.length}개를 삭제할까요?`,
+    initialValue: false,
+  });
+
+  if (p.isCancel(confirm) || !confirm) {
+    p.cancel('취소되었습니다.');
+    return;
+  }
+
+  const nameSet = new Set(names);
+  store.shortcuts = store.shortcuts.filter((s) => !nameSet.has(s.name));
+  await writeStore(store);
+  await generateAliasesFile(store);
+
+  p.outro(
+    chalk.green(`✓ ${names.length}개 삭제됨`) +
+      '\n\n  ' +
+      chalk.dim('현재 셸에 반영하려면: ') +
+      chalk.cyan('hareload'),
+  );
 }
 
 /**
@@ -151,6 +256,11 @@ function formatRelative(date: Date): string {
   const diffMonth = Math.floor(diffDay / 30);
   if (diffMonth < 12) return `${diffMonth}개월 전`;
   return `${Math.floor(diffMonth / 12)}년 전`;
+}
+
+/** 문자열을 maxLen 이하로 자름. 초과 시 '…' 붙임. */
+function truncate(str: string, maxLen: number): string {
+  return str.length <= maxLen ? str : str.slice(0, maxLen - 1) + '…';
 }
 
 /**
