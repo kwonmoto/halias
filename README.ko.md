@@ -206,6 +206,7 @@ ha doctor
 
 - fzf 설치 여부 (퍼지 검색 품질)
 - 셸 통합 설치 여부 (`~/.zshrc` 마커)
+- 셸 history 접근 가능 여부 (`ha add --last`, `ha suggest` 사용 가능성)
 - `shortcuts.json` 무결성 (parse 가능?)
 - 위험한 단축키 (시스템 명령어 덮어씌움)
 - `aliases.sh` 존재 여부
@@ -215,6 +216,7 @@ halias 환경 점검
 
   ✓ fzf 설치됨
   ✓ 셸 통합 설치됨 (.zshrc)
+  ✓ 셸 history 사용 가능 (최근 명령 1000개)
   ✓ shortcuts.json 무결성 정상 (12개)
   ! 시스템 명령어를 덮어씌우는 단축키 1개
       • ls

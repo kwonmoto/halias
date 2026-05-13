@@ -4,6 +4,16 @@ import path from 'node:path';
 
 const HALIAS_COMMAND_RE = /^(?:ha|halias)(?:\s+|$)/;
 
+export interface ShellHistoryDiagnostics {
+  files: {
+    path: string;
+    readable: boolean;
+    commandCount: number;
+    error?: string;
+  }[];
+  commands: string[];
+}
+
 function expandHome(filePath: string): string {
   if (filePath === '~') return os.homedir();
   if (filePath.startsWith('~/')) return path.join(os.homedir(), filePath.slice(2));
@@ -73,18 +83,36 @@ export async function readLastShellCommand(): Promise<string | undefined> {
 }
 
 export async function readShellHistoryCommands(limit = 500): Promise<string[]> {
+  const diagnostics = await inspectShellHistory(limit);
+  return diagnostics.commands;
+}
+
+export async function inspectShellHistory(limit = 500): Promise<ShellHistoryDiagnostics> {
+  const files: ShellHistoryDiagnostics['files'] = [];
   const allCommands: string[] = [];
 
   for (const filePath of defaultHistoryFiles()) {
     try {
       const commands = await readCommandsFromHistoryFile(filePath);
+      files.push({
+        path: filePath,
+        readable: true,
+        commandCount: commands.length,
+      });
       allCommands.push(...commands);
     } catch (err) {
-      if ((err as NodeJS.ErrnoException).code === 'ENOENT') continue;
-      throw err;
+      files.push({
+        path: filePath,
+        readable: false,
+        commandCount: 0,
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
   }
 
   const dedupedConsecutive = allCommands.filter((command, index) => command !== allCommands[index - 1]);
-  return dedupedConsecutive.slice(-limit);
+  return {
+    files,
+    commands: dedupedConsecutive.slice(-limit),
+  };
 }

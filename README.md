@@ -198,6 +198,7 @@ halias environment check
 
   ✓ fzf installed
   ✓ Shell integration installed (.zshrc)
+  ✓ Shell history available (1000 recent commands)
   ✓ shortcuts.json integrity OK (12 entries)
   ! 1 shortcut overrides system command
       • ls

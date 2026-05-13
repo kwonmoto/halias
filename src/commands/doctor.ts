@@ -6,6 +6,7 @@ import * as p from '@clack/prompts';
 import chalk from 'chalk';
 import { isFzfAvailable } from '../lib/fzf.js';
 import { detectPackageManager, detectPlatform } from '../lib/platform.js';
+import { inspectShellHistory } from '../lib/shell-history.js';
 import { detectSystemCommandConflict } from '../lib/system-commands.js';
 import { readStore } from '../core/store.js';
 import { ALIASES_OUTPUT } from '../lib/paths.js';
@@ -26,6 +27,7 @@ interface CheckResult {
  *   3. shortcuts.json 무결성 (parse 가능?)
  *   4. 위험한 단축키 — 시스템 명령어 덮어씌움 감지
  *   5. aliases.sh 와 shortcuts.json 동기화 상태
+ *   6. 셸 history 접근 가능 여부 (ha add --last / ha suggest)
  */
 export async function runDoctor(): Promise<void> {
   console.log();
@@ -36,6 +38,7 @@ export async function runDoctor(): Promise<void> {
 
   checks.push(await checkFzf());
   checks.push(await checkShellIntegration());
+  checks.push(await checkShellHistory());
   checks.push(await checkStoreIntegrity());
   checks.push(...(await checkDangerousShortcuts()));
   checks.push(await checkGeneratedFile());
@@ -90,6 +93,43 @@ async function checkShellIntegration(): Promise<CheckResult> {
     message: '셸 통합 미설치',
     detail: '단축키가 셸에 등록되지 않아 사용할 수 없습니다.',
     fix: 'ha install 을 실행하세요.',
+  };
+}
+
+async function checkShellHistory(): Promise<CheckResult> {
+  const diagnostics = await inspectShellHistory(1_000);
+  const readable = diagnostics.files.filter((file) => file.readable);
+
+  if (readable.length === 0) {
+    const attempted = diagnostics.files.length > 0
+      ? diagnostics.files.map((file) => `  • ${file.path}`).join('\n')
+      : '  • history 파일 후보 없음';
+
+    return {
+      level: 'warn',
+      message: '셸 history 접근 불가',
+      detail: attempted,
+      fix: 'HISTFILE 설정 또는 ~/.zsh_history / ~/.bash_history 권한을 확인하세요.',
+    };
+  }
+
+  if (diagnostics.commands.length === 0) {
+    return {
+      level: 'warn',
+      message: '셸 history 명령 없음',
+      detail: readable.map((file) => `  • ${path.basename(file.path)} 읽음 (0개)`).join('\n'),
+      fix: '명령을 몇 번 실행한 뒤 ha add --last 또는 ha suggest 를 다시 사용하세요.',
+    };
+  }
+
+  const detail = readable
+    .map((file) => `  • ${path.basename(file.path)}: ${file.commandCount}개`)
+    .join('\n');
+
+  return {
+    level: 'ok',
+    message: `셸 history 사용 가능 (${diagnostics.commands.length}개 최근 명령)`,
+    detail,
   };
 }
 
