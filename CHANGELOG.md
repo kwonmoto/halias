@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ha stats --unused --clean` / `ha unused --clean` opens an interactive checklist to bulk-delete unused and stale shortcuts in one step.
 - `ha unused` shorthand command — equivalent to `ha stats --unused`, for quicker access.
 - `ha rename <old> <new>` renames a shortcut without going through the full edit form. Prompts interactively if arguments are omitted.
+- `ha list --tag <tag>` filters the shortcut list to a specific tag.
 - `ha add --last [name]` can save the last shell command as a shortcut, making repeated long commands easier to capture without retyping.
 - `ha suggest` can surface repeated shell commands from recent history as shortcut candidates.
 - `ha suggest --save` lets you pick a suggested command and save it through the normal preview/confirmation flow.

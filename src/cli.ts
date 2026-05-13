@@ -62,7 +62,8 @@ program
   .alias('ls')
   .description('등록된 단축키 목록 보기')
   .option('--sort <mode>', '정렬: name | recent | usage', 'name')
-  .action(async (options: { sort?: 'name' | 'recent' | 'usage' }) => {
+  .option('--tag <tag>', '특정 태그만 필터')
+  .action(async (options: { sort?: 'name' | 'recent' | 'usage'; tag?: string }) => {
     await runList(options);
   });
 

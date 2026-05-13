@@ -7,6 +7,7 @@ export type SortMode = 'name' | 'recent' | 'usage';
 
 export interface ListOptions {
   sort?: SortMode;
+  tag?: string;
 }
 
 /**
@@ -20,16 +21,25 @@ export interface ListOptions {
 export async function runList(options: ListOptions = {}): Promise<void> {
   const store = await readStore();
 
-  if (store.shortcuts.length === 0) {
-    console.log(
-      chalk.dim('등록된 단축키가 없습니다. ') +
-        chalk.cyan("'ha add'") +
-        chalk.dim('로 시작하세요.'),
-    );
+  const sort: SortMode = options.sort ?? 'name';
+
+  // 태그 필터
+  const filtered = options.tag
+    ? store.shortcuts.filter((s) => s.tags.includes(options.tag!))
+    : store.shortcuts;
+
+  if (filtered.length === 0) {
+    if (options.tag) {
+      console.log(chalk.dim(`태그 '${options.tag}'에 해당하는 단축키가 없습니다.`));
+    } else {
+      console.log(
+        chalk.dim('등록된 단축키가 없습니다. ') +
+          chalk.cyan("'ha add'") +
+          chalk.dim('로 시작하세요.'),
+      );
+    }
     return;
   }
-
-  const sort: SortMode = options.sort ?? 'name';
 
   let usageMap: Map<string, number> | null = null;
   if (sort === 'usage') {
@@ -37,10 +47,14 @@ export async function runList(options: ListOptions = {}): Promise<void> {
     usageMap = new Map(agg.byShortcut.map((e) => [e.name, e.count]));
   }
 
-  const sorted = sortShortcuts(store.shortcuts, sort, usageMap);
+  const sorted = sortShortcuts(filtered, sort, usageMap);
+
+  const headerCount = options.tag
+    ? `${filtered.length}개 ${chalk.dim(`(태그: ${options.tag} · ${sortLabel(sort)})`)}`
+    : `${store.shortcuts.length}개 ${chalk.dim(`(${sortLabel(sort)})`)}`;
 
   console.log();
-  console.log(chalk.bold(`  단축키 ${store.shortcuts.length}개 ${chalk.dim(`(${sortLabel(sort)})`)}`));
+  console.log(chalk.bold(`  단축키 ${headerCount}`));
   console.log();
 
   const maxName = Math.max(...sorted.map((s) => s.name.length));
