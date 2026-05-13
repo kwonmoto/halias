@@ -263,8 +263,9 @@ async function editInEditor(current: string, shortcutName: string): Promise<stri
   return body;
 }
 
-/** 시스템에 설치된 에디터 목록을 감지해 사용자가 선택하게 함. 취소 시 undefined. */
+/** 시스템에 설치된 에디터 목록을 감지해 사용자가 선택하게 함. 취소 또는 비TTY 시 undefined. */
 async function pickEditor(): Promise<string | undefined> {
+  if (!process.stdin.isTTY) return undefined;
   const candidates = [
     { bin: 'code',  label: 'VSCode' },
     { bin: 'zed',   label: 'Zed' },

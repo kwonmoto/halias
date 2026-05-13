@@ -157,6 +157,12 @@ async function runClean(
   agg: { byShortcut: { name: string; lastUsed: Date | null }[] },
   store: { shortcuts: Shortcut[]; version: 1 },
 ): Promise<void> {
+  if (!process.stdin.isTTY) {
+    console.log(chalk.yellow('  --clean 은 대화형 터미널에서 실행해야 합니다.'));
+    console.log(chalk.dim('  iTerm, Terminal.app 등에서 ') + chalk.cyan('ha unused --clean') + chalk.dim(' 을 실행하세요.'));
+    return;
+  }
+
   const usedMap = new Map(agg.byShortcut.map((e) => [e.name, e.lastUsed]));
   const neverUsed = store.shortcuts.filter((s) => !usedMap.has(s.name));
 
