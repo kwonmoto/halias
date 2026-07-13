@@ -5,6 +5,7 @@ import * as p from '@clack/prompts';
 import chalk from 'chalk';
 import { readStore, addShortcut } from '../core/store.js';
 import { generateAliasesFile } from '../core/generator.js';
+import { detectSystemCommandConflict } from '../lib/system-commands.js';
 import type { Shortcut } from '../core/types.js';
 import { t } from '../lib/i18n.js';
 
@@ -71,11 +72,15 @@ export async function runImportRc(filePath?: string): Promise<void> {
     return;
   }
 
-  const options = newEntries.map((e) => ({
-    value: e.name,
-    label: e.name,
-    hint: `${e.type.padEnd(8)} ${truncate(e.command, 50)}`,
-  }));
+  const options = newEntries.map((e) => {
+    const conflict = detectSystemCommandConflict(e.name).conflict;
+    const marker = conflict ? chalk.yellow('⚠ ') : '';
+    return {
+      value: e.name,
+      label: e.name,
+      hint: `${marker}${e.type.padEnd(8)} ${truncate(e.command, 50)}`,
+    };
+  });
 
   const selected = await p.multiselect({
     message: t('importRc.selectPrompt'),
@@ -92,6 +97,17 @@ export async function runImportRc(filePath?: string): Promise<void> {
   if (names.length === 0) {
     p.outro(chalk.dim(t('importRc.noneSelected')));
     return;
+  }
+
+  // 선택된 항목 중 시스템 명령어를 덮어씌우는 것이 있으면 확인 전에 경고
+  const selectedConflicts = newEntries.filter(
+    (e) => names.includes(e.name) && detectSystemCommandConflict(e.name).conflict,
+  );
+  if (selectedConflicts.length > 0) {
+    console.log();
+    console.log(chalk.yellow(`  ${t('importRc.conflictWarning', { count: String(selectedConflicts.length) })}`));
+    selectedConflicts.forEach((e) => console.log(chalk.dim(`    • ${e.name}`)));
+    console.log();
   }
 
   const confirm = await p.confirm({

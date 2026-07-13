@@ -180,9 +180,9 @@ async function checkDangerousShortcuts(): Promise<CheckResult[]> {
 }
 
 async function checkGeneratedFile(): Promise<CheckResult> {
+  let content: string;
   try {
-    await fs.access(ALIASES_OUTPUT);
-    return { level: 'ok', message: t('doctor.aliasesOk') };
+    content = await fs.readFile(ALIASES_OUTPUT, 'utf-8');
   } catch {
     return {
       level: 'warn',
@@ -191,6 +191,27 @@ async function checkGeneratedFile(): Promise<CheckResult> {
       fix: t('doctor.aliasesWarnFix'),
     };
   }
+
+  // 실제 동기화(drift) 검사 — shortcuts.json 의 각 항목이 aliases.sh 에 함수로 존재하는지 비교.
+  // 수동 편집이나 중단된 쓰기로 둘이 어긋나면 여기서 잡는다.
+  let store;
+  try {
+    store = await readStore();
+  } catch {
+    return { level: 'ok', message: t('doctor.aliasesOk') }; // 무결성 검사에서 이미 다룸
+  }
+
+  const missing = store.shortcuts.filter((s) => !content.includes(`${s.name}() {`));
+  if (missing.length > 0) {
+    return {
+      level: 'warn',
+      message: t('doctor.aliasesDrift', { count: missing.length }),
+      detail: missing.slice(0, 5).map((s) => `  • ${s.name}`).join('\n'),
+      fix: t('doctor.aliasesDriftFix'),
+    };
+  }
+
+  return { level: 'ok', message: t('doctor.aliasesOk') };
 }
 
 function checkLang(): CheckResult {

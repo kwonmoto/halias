@@ -77,4 +77,6 @@ export async function runRemove(name: string | undefined): Promise<void> {
 
   const usageInfo = count > 0 ? chalk.dim(` ${t('remove.usageCount', { count })}`) : '';
   console.log(chalk.green(`✓ ${t('remove.deleted', { name: target })}`) + usageInfo);
+  // add/edit/rename 과 동일하게 reload 안내 — 현재 셸엔 아직 함수가 살아 있음
+  console.log(chalk.dim(`  ${t('remove.reloadHint')}`) + chalk.cyan(t('common.hareload')));
 }

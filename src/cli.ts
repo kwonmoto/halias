@@ -18,6 +18,8 @@ import { runDoctor } from './commands/doctor.js';
 import { runStats } from './commands/stats.js';
 import { runEdit } from './commands/edit.js';
 import { runExport, runImport } from './commands/export-import.js';
+import { runRestore } from './commands/restore.js';
+import { runUninstall } from './commands/uninstall.js';
 import { runSuggest } from './commands/suggest.js';
 import { runRename } from './commands/rename.js';
 import { runCompletion } from './commands/completion.js';
@@ -95,6 +97,13 @@ program
   });
 
 program
+  .command('uninstall')
+  .description(t('cli.uninstall'))
+  .action(async () => {
+    await runUninstall();
+  });
+
+program
   .command('stats')
   .description(t('cli.stats'))
   .option('--top <n>', t('cli.statsOptTop'), '10')
@@ -143,6 +152,13 @@ program
   .option('--strategy <mode>', t('cli.importOptStrategy'), 'merge')
   .action(async (filePath: string, options: { strategy?: 'merge' | 'replace' }) => {
     await runImport(filePath, options);
+  });
+
+program
+  .command('restore')
+  .description(t('cli.restore'))
+  .action(async () => {
+    await runRestore();
   });
 
 program

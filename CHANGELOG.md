@@ -5,6 +5,22 @@ All notable changes to halias will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [0.5.0] - 2026-07-13
+
+### Added
+
+- Automatic backup before destructive operations. `ha import --strategy replace` and `ha unused --clean` now snapshot your shortcuts to `~/.halias/shortcuts.json.bak` first.
+- `ha restore` — roll back to that last automatic backup.
+- `ha uninstall` — remove halias' shell integration from `~/.zshrc` (and completion setup), with an option to also delete your `~/.halias` data. The symmetric counterpart to `ha install`.
+- `ha import` and `ha import-rc` now warn when an incoming shortcut would shadow a system command (e.g. `ls`, `cd`), matching the check `ha add` already performs.
+
+### Changed
+
+- `ha rm` now prints a `hareload` reminder after deleting, consistent with `add` / `edit` / `rename` (the removed shortcut is still live in the current shell until reloaded).
+- `ha doctor` now verifies that `aliases.sh` is actually in sync with `shortcuts.json` (each shortcut has a matching generated function), instead of only checking that the file exists.
+
 ## [0.4.2] - 2026-07-13
 
 ### Fixed

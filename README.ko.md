@@ -30,14 +30,7 @@ npm install -g halias
 
 `halias` 와 `ha` 가 글로벌로 등록됩니다. 일상에서는 짧은 `ha` 를 추천해요.
 
-### 소스에서 설치
-
-```bash
-git clone https://github.com/hyukjunkwon/halias.git
-cd halias
-npm install
-npm run link:local
-```
+나중에 셸 통합을 제거하려면 `ha uninstall` 을 실행하세요 — `~/.zshrc` 의 halias 관리 블록(과 자동완성 설정)만 정확히 지우고, 원하면 `~/.halias` 데이터도 함께 삭제합니다.
 
 ## 빠른 시작
 
@@ -87,9 +80,11 @@ hareload             # 새 단축키를 현재 셸에 즉시 반영
 | `ha suggest` | 반복해서 입력한 셸 명령을 단축키 후보로 추천 |
 | `ha export [path]` | JSON 백업 |
 | `ha import <path>` | 백업에서 복원 (`--strategy merge\|replace`) |
+| `ha restore` | 마지막 자동 백업으로 되돌리기 (파괴적 작업 직전 저장분) |
 | `ha import-rc [파일]` | `~/.zshrc` 등 rc 파일에서 alias / 함수 가져오기 (파일 미지정 시 자동 감지) |
 | `ha config lang [en\|ko]` | UI 언어 설정 확인 / 변경 |
 | `ha install` | `~/.zshrc` 에 셸 통합 추가 |
+| `ha uninstall` | `~/.zshrc` 에서 셸 통합 제거 |
 | `ha doctor` | 환경 점검 (fzf, 셸 통합, 위험 단축키 등) |
 
 ## 작동 원리
@@ -200,9 +195,12 @@ ha export                              # ./halias-backup-YYYY-MM-DD.json
 ha export ~/Dropbox/halias-backup.json # 특정 경로
 ha import ~/Dropbox/halias-backup.json # merge (기존 우선) — 기본
 ha import backup.json --strategy replace  # 완전 교체
+ha restore                             # 마지막 파괴적 작업 되돌리기
 ```
 
 `merge` 는 같은 이름이 있으면 기존을 유지합니다 (안전). `replace` 는 기존을 모두 지우고 백업으로 갈아끼웁니다 (명시적 확인 필요).
+
+`import --strategy replace` 나 `unused --clean` 같은 파괴적 작업 직전에 halias 는 자동으로 `~/.halias/shortcuts.json.bak` 스냅샷을 저장합니다. `ha restore` 로 되돌릴 수 있어요. import 시 들어오는 단축키가 시스템 명령어(`ls`, `cd` 등)를 덮어씌우면 경고도 표시됩니다.
 
 ## 환경 점검
 

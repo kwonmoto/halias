@@ -2,8 +2,9 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import * as p from '@clack/prompts';
 import chalk from 'chalk';
-import { readStore, writeStore } from '../core/store.js';
+import { readStore, writeStore, backupStore } from '../core/store.js';
 import { generateAliasesFile } from '../core/generator.js';
+import { detectSystemCommandConflict } from '../lib/system-commands.js';
 import { StoreSchema, type Shortcut } from '../core/types.js';
 import { t } from '../lib/i18n.js';
 
@@ -73,9 +74,12 @@ export async function runImport(
   console.log();
 
   let finalShortcuts: Shortcut[];
+  // 이번에 새로 유입되는 항목 — 시스템 명령어 충돌 검사 대상
+  let incoming: Shortcut[];
 
   if (strategy === 'replace') {
     finalShortcuts = imported.shortcuts;
+    incoming = imported.shortcuts;
     console.log(chalk.yellow(`  ${t('importCmd.replaceWarning')}`));
     console.log(chalk.dim(`  ${t('importCmd.resultCount', { count: finalShortcuts.length })}`));
   } else {
@@ -85,6 +89,7 @@ export async function runImport(
     const skipped = imported.shortcuts.length - additions.length;
 
     finalShortcuts = [...current.shortcuts, ...additions];
+    incoming = additions;
 
     console.log(chalk.green(`  ${t('importCmd.added', { count: additions.length })}`));
     if (additions.length > 0) {
@@ -103,6 +108,17 @@ export async function runImport(
   }
   console.log();
 
+  // 3.5 시스템 명령어 충돌 경고 (add 와 동일한 안전장치를 대량 유입 경로에도 적용)
+  const conflicts = incoming.filter((s) => detectSystemCommandConflict(s.name).conflict);
+  if (conflicts.length > 0) {
+    console.log(chalk.yellow(`  ${t('importCmd.conflictWarning', { count: conflicts.length })}`));
+    conflicts.slice(0, 5).forEach((s) => console.log(chalk.dim(`    • ${s.name}`)));
+    if (conflicts.length > 5) {
+      console.log(chalk.dim(`    ${t('importCmd.moreItems', { count: conflicts.length - 5 })}`));
+    }
+    console.log();
+  }
+
   // 4. 사용자 확인
   const confirmed = await p.confirm({
     message: t('importCmd.confirmPrompt'),
@@ -114,7 +130,8 @@ export async function runImport(
     return;
   }
 
-  // 5. 저장 + aliases.sh 재생성
+  // 5. 파괴적 작업 전 자동 백업 → 저장 → aliases.sh 재생성
+  await backupStore();
   const newStore = { version: 1 as const, shortcuts: finalShortcuts };
   await writeStore(newStore);
   await generateAliasesFile(newStore);
@@ -123,5 +140,8 @@ export async function runImport(
     chalk.green(`✓ ${t('importCmd.done')}`) +
       chalk.dim(t('importCmd.doneHint')) +
       chalk.cyan(t('common.hareload')),
+  );
+  console.log(
+    chalk.dim(`  ${t('common.restoreHint')}`) + chalk.cyan(t('common.restoreCmd')),
   );
 }

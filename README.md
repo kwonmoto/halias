@@ -30,14 +30,7 @@ npm install -g halias
 
 Both `halias` and `ha` will be available globally. The shorter `ha` is recommended for daily use.
 
-### From source
-
-```bash
-git clone https://github.com/hyukjunkwon/halias.git
-cd halias
-npm install
-npm run link:local      # registers both `halias` and `ha` globally
-```
+To remove halias' shell integration later, run `ha uninstall` — it strips the managed block from your `~/.zshrc` (and completion setup), and optionally deletes your data in `~/.halias`.
 
 ## Quick start
 
@@ -87,9 +80,11 @@ hareload             # apply newly added shortcuts to current shell
 | `ha suggest` | Suggest repeated shell commands worth saving |
 | `ha export [path]` | Back up shortcuts to JSON |
 | `ha import <path>` | Restore from backup (`--strategy merge\|replace`) |
+| `ha restore` | Revert to the last auto-backup (saved before destructive operations) |
 | `ha import-rc [file]` | Import aliases and functions from `~/.zshrc` (auto-detected if omitted) |
 | `ha config lang [en\|ko]` | Get or set the UI language |
 | `ha install` | Add shell integration to `~/.zshrc` |
+| `ha uninstall` | Remove shell integration from `~/.zshrc` |
 | `ha doctor` | Diagnose your environment |
 
 ## How it works
@@ -193,9 +188,12 @@ ha export                              # ./halias-backup-2026-04-29.json
 ha export ~/Dropbox/halias-backup.json
 ha import ~/Dropbox/halias-backup.json # merge (existing wins)
 ha import backup.json --strategy replace
+ha restore                             # undo the last destructive operation
 ```
 
 `merge` keeps existing entries on name conflict (safe). `replace` clears everything first (explicit confirmation required).
+
+Before any destructive operation — `import --strategy replace` or `unused --clean` — halias automatically saves a snapshot to `~/.halias/shortcuts.json.bak`. Run `ha restore` to roll back to it. Imports also warn you when an incoming shortcut would shadow a system command (e.g. `ls`, `cd`).
 
 ## Doctor
 

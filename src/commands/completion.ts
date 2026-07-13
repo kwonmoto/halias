@@ -78,8 +78,10 @@ _ha() {
     'suggest:${t('completion.cmdSuggest')}'
     'export:${t('completion.cmdExport')}'
     'import:${t('completion.cmdImport')}'
+    'restore:${t('completion.cmdRestore')}'
     'tags:${t('completion.cmdTags')}'
     'install:${t('completion.cmdInstall')}'
+    'uninstall:${t('completion.cmdUninstall')}'
     'doctor:${t('completion.cmdDoctor')}'
     'config:${t('completion.cmdConfig')}'
     'import-rc:${t('completion.cmdImportRc')}'
@@ -138,7 +140,7 @@ _ha_shortcuts() {
 }
 
 _ha() {
-  local commands="add edit rename list ls rm remove search stats unused suggest export import tags install doctor config import-rc completion"
+  local commands="add edit rename list ls rm remove search stats unused suggest export import restore tags install uninstall doctor config import-rc completion"
   local shortcut_cmds="edit rm remove rename"
   local cur prev
   cur="\${COMP_WORDS[COMP_CWORD]}"
