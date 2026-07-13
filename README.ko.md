@@ -80,7 +80,7 @@ hareload             # 새 단축키를 현재 셸에 즉시 반영
 | `ha list` (= `ha ls`) | 단축키 목록 (`--sort name\|recent\|usage`, `--tag <태그>`) |
 | `ha tags [태그]` | 전체 태그 목록 + 개수 보기. 태그 선택 시 해당 단축키 필터 |
 | `ha rm [name]` | 단축키 삭제 (자주 쓰는 거면 추가 확인) |
-| `ha stats` | 사용 통계 (top N, 미사용, 기간 필터) |
+| `ha stats` | 사용 통계 (top N, 미사용, 디렉토리별, 기간 필터) |
 | `ha unused` | 한 번도 안 쓴 / 오래된 단축키 표시 |
 | `ha unused --clean` | 미사용 단축키 체크박스로 선택해 일괄 삭제 |
 | `ha suggest` | 반복해서 입력한 셸 명령을 단축키 후보로 추천 |
@@ -164,6 +164,7 @@ OS와 패키지 매니저(brew / apt / dnf / winget / scoop)를 자동 감지해
 ha stats              # top 10 + 막대 그래프 + 마지막 사용 시점
 ha stats --top 5      # top 5 만
 ha stats --since 7d   # 최근 7일만 (또는 24h, 30m)
+ha stats --by-dir     # 디렉토리별 사용 분포 — 컨텍스트 정렬이 뭘 배웠는지 보기
 ha stats --unused     # 한 번도 안 쓴 / 30일 이상 미사용 (명령어 + 등록일 함께 표시)
 ha unused             # 위 명령의 단축 버전
 ha unused --clean     # 체크박스로 선택해 일괄 삭제

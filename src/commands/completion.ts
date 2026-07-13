@@ -105,7 +105,7 @@ _ha() {
           _arguments '--sort[${t('completion.optSort')}]:mode:(name recent usage)' '--tag[${t('completion.optTag')}]:tag:($(  _ha_tags))'
           ;;
         stats)
-          _arguments '--top[top N]:n:' '--since[${t('completion.optSince')}]:period:' '--unused[${t('completion.optUnused')}]' '--clean[${t('completion.optClean')}]'
+          _arguments '--top[top N]:n:' '--since[${t('completion.optSince')}]:period:' '--unused[${t('completion.optUnused')}]' '--clean[${t('completion.optClean')}]' '--by-dir[${t('completion.optByDir')}]'
           ;;
         suggest)
           _arguments '--top[top N]:n:' '--min[${t('completion.optMin')}]:n:' '--save[${t('completion.optSave')}]'

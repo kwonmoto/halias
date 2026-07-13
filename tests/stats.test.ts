@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { aggregateStats, scoreShortcutsForDirectory } from '../src/core/stats.js';
+import { aggregateStats, aggregateByDirectory, scoreShortcutsForDirectory } from '../src/core/stats.js';
 import { HALIAS_HOME, STATS_LOG_PATH } from '../src/lib/paths.js';
 
 async function writeLog(lines: string[]): Promise<void> {
@@ -47,6 +47,40 @@ describe('aggregateStats', () => {
     const agg = await aggregateStats({ since: new Date(1500000000 * 1000) });
     expect(agg.totalCalls).toBe(1);
     expect(agg.byShortcut[0]?.name).toBe('new');
+  });
+});
+
+describe('aggregateByDirectory', () => {
+  it('groups usage by directory, sorted by total desc', async () => {
+    await writeLog([
+      '1700000001\tdev\t/work/app',
+      '1700000002\tdev\t/work/app',
+      '1700000003\tgs\t/work/app',
+      '1700000004\tgs\t/side/api',
+    ]);
+    const dirs = await aggregateByDirectory();
+    expect(dirs).toHaveLength(2);
+    expect(dirs[0]).toMatchObject({ directory: '/work/app', total: 3 });
+    expect(dirs[0]?.byShortcut[0]).toMatchObject({ name: 'dev', count: 2 });
+    expect(dirs[1]).toMatchObject({ directory: '/side/api', total: 1 });
+  });
+
+  it('excludes old-format entries without directory info', async () => {
+    await writeLog(['1700000000 gs', '1700000001\tgs\t/d']);
+    const dirs = await aggregateByDirectory();
+    expect(dirs).toHaveLength(1);
+    expect(dirs[0]?.total).toBe(1);
+  });
+
+  it('applies the since filter', async () => {
+    await writeLog(['1000000000\tgs\t/old', '1700000000\tgs\t/new']);
+    const dirs = await aggregateByDirectory({ since: new Date(1500000000 * 1000) });
+    expect(dirs).toHaveLength(1);
+    expect(dirs[0]?.directory).toBe('/new');
+  });
+
+  it('returns empty when there is no log', async () => {
+    expect(await aggregateByDirectory()).toEqual([]);
   });
 });
 

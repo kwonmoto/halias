@@ -125,6 +125,47 @@ export async function aggregateStats(options: { since?: Date } = {}): Promise<St
   };
 }
 
+export interface DirectoryStats {
+  directory: string;
+  /** 이 디렉토리에서의 총 호출 수 */
+  total: number;
+  /** 단축키별 횟수 (count desc) */
+  byShortcut: { name: string; count: number }[];
+}
+
+/**
+ * 디렉토리별 사용 집계 — 컨텍스트 학습 데이터를 사용자에게 보여주는 용도.
+ *
+ * 옛 형식(디렉토리 없음) 엔트리는 제외 — v0.2 이전 데이터라 컨텍스트 정보가 없음.
+ * total desc 정렬.
+ */
+export async function aggregateByDirectory(
+  options: { since?: Date } = {},
+): Promise<DirectoryStats[]> {
+  const entries = await readEntries(options);
+
+  const dirs = new Map<string, Map<string, number>>();
+  for (const entry of entries) {
+    if (!entry.directory) continue;
+    const counts = dirs.get(entry.directory) ?? new Map<string, number>();
+    counts.set(entry.name, (counts.get(entry.name) ?? 0) + 1);
+    dirs.set(entry.directory, counts);
+  }
+
+  return Array.from(dirs.entries())
+    .map(([directory, counts]) => {
+      const byShortcut = Array.from(counts.entries())
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+      return {
+        directory,
+        total: byShortcut.reduce((sum, s) => sum + s.count, 0),
+        byShortcut,
+      };
+    })
+    .sort((a, b) => b.total - a.total || a.directory.localeCompare(b.directory));
+}
+
 /**
  * 컨텍스트 인식 검색 결과 점수.
  *

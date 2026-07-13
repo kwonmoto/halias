@@ -137,7 +137,8 @@ program
   .option('--since <period>', t('cli.statsOptSince'))
   .option('--unused', t('cli.statsOptUnused'))
   .option('--clean', t('cli.statsOptClean'))
-  .action(async (options: { top?: string; since?: string; unused?: boolean; clean?: boolean }) => {
+  .option('--by-dir', t('cli.statsOptByDir'))
+  .action(async (options: { top?: string; since?: string; unused?: boolean; clean?: boolean; byDir?: boolean }) => {
     await runStats(options);
   });
 

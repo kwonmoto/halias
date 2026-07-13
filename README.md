@@ -80,7 +80,7 @@ hareload             # apply newly added shortcuts to current shell
 | `ha list` (= `ha ls`) | List shortcuts (`--sort name\|recent\|usage`, `--tag <tag>`) |
 | `ha tags [tag]` | Show all tags with counts; select a tag to filter the list |
 | `ha rm [name]` | Delete a shortcut (extra confirm for frequently used) |
-| `ha stats` | Usage stats (top N, unused, time-filtered) |
+| `ha stats` | Usage stats (top N, unused, per-directory, time-filtered) |
 | `ha unused` | Show never-used and stale shortcuts |
 | `ha unused --clean` | Bulk-delete unused shortcuts interactively |
 | `ha suggest` | Suggest repeated shell commands worth saving |
@@ -161,6 +161,7 @@ It detects your OS and package manager (Homebrew, apt, dnf, winget, scoop) and o
 ha stats              # top 10 with bar chart
 ha stats --top 5
 ha stats --since 7d   # last 7 days only (also: 24h, 30m)
+ha stats --by-dir     # usage per directory — see what the context ranking has learned
 ha stats --unused     # never-used + 30+ days idle (shows command + registration date)
 ha unused             # shorthand for the above
 ha unused --clean     # interactive checklist to bulk-delete unused shortcuts

@@ -1,6 +1,7 @@
+import os from 'node:os';
 import * as p from '@clack/prompts';
 import chalk from 'chalk';
-import { aggregateStats } from '../core/stats.js';
+import { aggregateStats, aggregateByDirectory } from '../core/stats.js';
 import { readStore, mutateStore, backupStore } from '../core/store.js';
 import { generateAliasesFile } from '../core/generator.js';
 import type { Shortcut } from '../core/types.js';
@@ -11,6 +12,8 @@ export interface StatsOptions {
   unused?: boolean;
   /** --unused 목록에서 바로 일괄 삭제 */
   clean?: boolean;
+  /** 디렉토리별 사용 분포 — 컨텍스트 학습 데이터 보기 */
+  byDir?: boolean;
   /** 최근 N일만 집계 (예: '7d' → 최근 7일) */
   since?: string;
   /** top N (기본 10) */
@@ -32,6 +35,11 @@ export async function runStats(options: StatsOptions = {}): Promise<void> {
     console.log(chalk.yellow(`  ${t('stats.sinceInvalid', { input: invalid })}`));
   }
   const topN = parseInt(options.top ?? '10', 10);
+
+  if (options.byDir) {
+    await printByDirectory(since, topN);
+    return;
+  }
 
   const [agg, store] = await Promise.all([aggregateStats({ since }), readStore()]);
 
@@ -251,6 +259,48 @@ async function runClean(
       chalk.dim(t('common.restoreHint')) +
       chalk.cyan(t('common.restoreCmd')),
   );
+}
+
+/**
+ * --by-dir: 디렉토리별 사용 분포.
+ * 컨텍스트 인식 정렬이 학습한 데이터를 그대로 보여준다 — "어디서 뭘 쓰는지".
+ */
+async function printByDirectory(since: Date | undefined, topN: number): Promise<void> {
+  const dirs = await aggregateByDirectory({ since });
+
+  console.log();
+  if (dirs.length === 0) {
+    console.log(chalk.dim(`  ${t('stats.byDirEmpty')}`));
+    console.log();
+    return;
+  }
+
+  const total = dirs.reduce((sum, d) => sum + d.total, 0);
+  console.log(
+    chalk.bold(`  ${t('stats.byDirHeader')}`) +
+      chalk.dim(`  (${t('stats.periodTotal', { count: total })})`),
+  );
+  console.log();
+
+  const home = os.homedir();
+  const shorten = (dir: string): string => (dir.startsWith(home) ? `~${dir.slice(home.length)}` : dir);
+
+  for (const dir of dirs.slice(0, topN)) {
+    console.log(`  ${chalk.cyan(shorten(dir.directory))}  ${chalk.dim(t('stats.byDirUses', { count: dir.total }))}`);
+    const top = dir.byShortcut.slice(0, 5);
+    const maxCount = top[0]?.count ?? 1;
+    const maxName = Math.max(...top.map((s) => s.name.length), 4);
+    for (const s of top) {
+      const bar = renderBar(s.count, maxCount, 12);
+      console.log(`    ${chalk.cyan(s.name.padEnd(maxName))}  ${s.count.toString().padStart(4)}  ${bar}`);
+    }
+    console.log();
+  }
+
+  if (dirs.length > topN) {
+    console.log(chalk.dim(`  ${t('stats.byDirMore', { count: dirs.length - topN })}`));
+    console.log();
+  }
 }
 
 /**
