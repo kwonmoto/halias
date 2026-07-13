@@ -181,6 +181,18 @@ ha suggest --save    # pick a suggestion and save it immediately
 
 Suggestions skip commands that are already saved as shortcuts, short one-off commands, session setup noise, and common navigation commands like `cd`, `ls`, and `pwd`.
 
+## Argument completion
+
+Give any shortcut its own tab completion. Via `ha edit <name>`, set an *argument completion command* — any shell command that prints candidates to stdout, one per line:
+
+```bash
+ha edit vault-dec
+#   ◇ Argument completion command?
+#     security dump-keychain | awk -F'"' '/svce/ {print $4}'
+```
+
+After `hareload`, `vault-dec <Tab>` completes from that command's live output. Works in both zsh and bash. If the candidate command fails, completion silently degrades — the shortcut itself is unaffected.
+
 ## Backup & restore
 
 ```bash
@@ -217,6 +229,7 @@ halias environment check
 ```
 ~/.halias/
 ├── shortcuts.json          # source of truth (human-readable JSON)
+├── shortcuts.json.bak      # auto-backup taken before destructive operations
 ├── stats.log               # raw usage log (timestamp + name + directory)
 ├── config.json             # halias preferences (e.g. preferred editor)
 └── generated/

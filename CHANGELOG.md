@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Per-shortcut argument tab completion. Set an argument completion command via `ha edit <name>` — any shell command printing candidates one per line — and `<shortcut> <Tab>` completes from its live output. Works in zsh and bash; a failing candidate command degrades silently without affecting the shortcut.
+
+### Changed
+
+- `ha stats --since` now accepts `w` (weeks) and `y` (years) in addition to `m` / `h` / `d`, and warns instead of silently ignoring an unrecognized value.
+
+### Fixed
+
+- `ha --version` now reports the actual package version instead of a hardcoded `0.2.0`.
+- `ha add --last` / `ha suggest` now reconstruct multi-line zsh history commands instead of capturing only the last line.
+- `ha import-rc` now parses aliases with trailing comments (`alias g="git" # vcs`) and unquoted values (`alias ll=ls`).
+
 ## [0.5.0] - 2026-07-13
 
 ### Added
@@ -20,13 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `ha rm` now prints a `hareload` reminder after deleting, consistent with `add` / `edit` / `rename` (the removed shortcut is still live in the current shell until reloaded).
 - `ha doctor` now verifies that `aliases.sh` is actually in sync with `shortcuts.json` (each shortcut has a matching generated function), instead of only checking that the file exists.
-- `ha stats --since` now accepts `w` (weeks) and `y` (years) in addition to `m` / `h` / `d`, and warns instead of silently ignoring an unrecognized value.
-
-### Fixed
-
-- `ha --version` now reports the actual package version instead of a hardcoded `0.2.0`.
-- `ha add --last` / `ha suggest` now reconstruct multi-line zsh history commands instead of capturing only the last line.
-- `ha import-rc` now parses aliases with trailing comments (`alias g="git" # vcs`) and unquoted values (`alias ll=ls`).
 
 ## [0.4.2] - 2026-07-13
 

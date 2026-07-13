@@ -14,6 +14,9 @@ export const ShortcutSchema = z.object({
   command: z.string().min(1),
   type: z.enum(['alias', 'function']),
   description: z.string().optional(),
+  /** 인자 완성 후보를 stdout 으로 출력하는 셸 명령 (한 줄에 하나).
+   *  설정 시 aliases.sh 에 이 단축키용 탭 완성이 함께 등록됨. ha edit 로 설정. */
+  argComplete: z.string().optional(),
   tags: z.array(z.string()).default([]),
   source: z.enum(['personal', 'team']).default('personal'),
   createdAt: z.string().datetime(),

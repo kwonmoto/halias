@@ -90,7 +90,46 @@ function renderShortcut(shortcut: Shortcut): string {
     `eval ${shellSingleQuote(definition)} 2>/dev/null || ` +
     `printf 'halias: skipped broken shortcut %s\\n' ${shellSingleQuote(shortcut.name)} >&2`;
 
-  return [...meta, guarded].join('\n');
+  const parts = [...meta, guarded];
+
+  if (shortcut.argComplete) {
+    parts.push(renderArgCompletion(shortcut.name, shortcut.argComplete));
+  }
+
+  return parts.join('\n');
+}
+
+/**
+ * argComplete 가 설정된 단축키의 탭 완성 등록 코드 생성.
+ *
+ * candidatesCommand 는 완성 후보를 stdout 으로 (한 줄에 하나) 출력하는 사용자 명령.
+ * aliases.sh 는 zsh / bash 양쪽에서 source 되므로 런타임에 셸을 분기해 등록한다.
+ * - zsh: compdef (compinit 미로드 환경이면 조용히 skip)
+ * - bash: complete -F
+ *
+ * 완성은 부가 기능 — 등록 실패해도 단축키 자체는 살아야 하므로 eval + '|| true' 로 격리.
+ */
+function renderArgCompletion(name: string, candidatesCommand: string): string {
+  // 함수 이름의 하이픈 등은 셸 함수명으로 부적합 → _ 로 치환한 헬퍼 이름 사용
+  const helper = `_halias_comp_${name.replace(/[^a-zA-Z0-9_]/g, '_')}`;
+
+  const script = [
+    `if [ -n "\${ZSH_VERSION:-}" ]; then`,
+    `  ${helper}() {`,
+    `    local -a _halias_candidates`,
+    `    _halias_candidates=("\${(@f)$(${candidatesCommand} 2>/dev/null)}")`,
+    `    (( \${#_halias_candidates[@]} )) && compadd -- "\${_halias_candidates[@]}"`,
+    `  }`,
+    `  command -v compdef >/dev/null 2>&1 && compdef ${helper} ${name}`,
+    `elif [ -n "\${BASH_VERSION:-}" ]; then`,
+    `  ${helper}() {`,
+    `    COMPREPLY=($(compgen -W "$(${candidatesCommand} 2>/dev/null)" -- "\${COMP_WORDS[COMP_CWORD]}"))`,
+    `  }`,
+    `  complete -F ${helper} ${name}`,
+    `fi`,
+  ].join('\n');
+
+  return `eval ${shellSingleQuote(script)} 2>/dev/null || true`;
 }
 
 export async function generateAliasesFile(store: Store): Promise<string> {

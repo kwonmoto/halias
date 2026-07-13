@@ -188,6 +188,18 @@ ha suggest --save    # 후보를 선택해서 즉시 저장
 
 이미 등록된 shortcut 명령, 짧은 일회성 명령, 세션 초기화성 명령, `cd`, `ls`, `pwd` 같은 이동/조회 명령은 추천에서 제외합니다.
 
+## 인자 자동완성
+
+단축키마다 전용 탭 완성을 붙일 수 있습니다. `ha edit <name>` 에서 *인자 완성 명령* — 완성 후보를 한 줄에 하나씩 stdout 으로 출력하는 셸 명령 — 을 설정하세요:
+
+```bash
+ha edit vault-dec
+#   ◇ 인자 완성 명령?
+#     security dump-keychain | awk -F'"' '/svce/ {print $4}'
+```
+
+`hareload` 후 `vault-dec <Tab>` 을 누르면 그 명령의 실시간 출력에서 후보를 완성합니다. zsh / bash 모두 동작하며, 후보 명령이 실패해도 완성만 조용히 비활성화될 뿐 단축키 자체는 영향받지 않습니다.
+
 ## 백업 / 복원
 
 ```bash
@@ -235,6 +247,7 @@ halias 환경 점검
 ```
 ~/.halias/
 ├── shortcuts.json          # 단일 진실 공급원 (사람이 읽을 수 있는 JSON)
+├── shortcuts.json.bak      # 파괴적 작업 직전 자동 백업
 ├── stats.log               # 사용 통계 원본 (timestamp + name + directory)
 ├── config.json             # halias 설정 (선호 에디터 등)
 └── generated/

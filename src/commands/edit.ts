@@ -13,6 +13,7 @@ interface MetaFormResult {
   type: ShortcutType;
   description: string;
   tags: string;
+  argComplete: string;
 }
 
 /**
@@ -108,6 +109,13 @@ export async function runEdit(name?: string): Promise<void> {
           initialValue: target!.tags.join(', '),
           placeholder: t('edit.tagsPlaceholder'),
         }),
+
+      argComplete: () =>
+        p.text({
+          message: t('edit.argCompleteField'),
+          initialValue: target!.argComplete ?? '',
+          placeholder: t('edit.argCompletePlaceholder'),
+        }),
     },
     {
       onCancel: () => {
@@ -156,6 +164,7 @@ export async function runEdit(name?: string): Promise<void> {
       .split(',')
       .map((tag) => tag.trim())
       .filter(Boolean),
+    argComplete: meta.argComplete.trim() || undefined,
     source: target.source,
     createdAt: target.createdAt,
     updatedAt: new Date().toISOString(),
@@ -217,6 +226,13 @@ function diffShortcut(before: Shortcut, after: MetaFormResult, newCommand: strin
     .join(', ');
   if (beforeTags !== afterTags) {
     lines.push(`${dim(t('edit.diffTags'))}  ${beforeTags || t('edit.diffTagsEmpty')} → ${afterTags || t('edit.diffTagsEmpty')}`);
+  }
+  const beforeArgComplete = before.argComplete ?? '';
+  const afterArgComplete = after.argComplete.trim();
+  if (beforeArgComplete !== afterArgComplete) {
+    lines.push(
+      `${dim(t('edit.diffArgComplete'))}  ${beforeArgComplete || t('edit.diffArgCompleteEmpty')} → ${afterArgComplete || t('edit.diffArgCompleteEmpty')}`,
+    );
   }
 
   return lines;
