@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-07-13
+
 ### Fixed
 
 - Running halias commands from two shells at the same time no longer loses updates — all store writes are now serialized through a lock file.
