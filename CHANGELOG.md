@@ -5,7 +5,14 @@ All notable changes to halias will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.4.1] - 2026-07-13
+
+### Fixed
+
+- A single shortcut with a shell syntax error no longer breaks the entire `aliases.sh`. Each shortcut is now loaded in isolation, so a broken one is skipped (with a one-line warning) while all others — and `hareload` — keep working.
+- `alias`-type shortcuts whose command contains a pipe, redirect, logical operator, or subshell (e.g. `ls -la | less`) are no longer corrupted by appended `"$@"`. Argument forwarding is now applied only to simple commands.
+- `ha completion bash` now includes the `config`, `import-rc`, and `tags` commands in tab completion, matching the zsh completion.
+- Context-aware sorting no longer breaks when a directory path contains a tab character; the full path is preserved during stats parsing.
 
 ## [0.4.0] - 2026-05-13
 

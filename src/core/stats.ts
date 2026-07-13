@@ -43,7 +43,8 @@ function parseLine(line: string): RawEntry | null {
     const [tsStr, name, ...rest] = line.split('\t');
     const ts = parseInt(tsStr ?? '', 10);
     if (!Number.isFinite(ts) || !name) return null;
-    const directory = rest[0] ?? null;
+    // 디렉토리 경로에 탭이 있어도 잘리지 않게 나머지 필드를 다시 합침
+    const directory = rest.length > 0 ? rest.join('\t') : null;
     return { ts: ts * 1000, name, directory };
   }
 

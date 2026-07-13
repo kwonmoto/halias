@@ -138,7 +138,7 @@ _ha_shortcuts() {
 }
 
 _ha() {
-  local commands="add edit rename list ls rm remove search stats unused suggest export import install doctor completion"
+  local commands="add edit rename list ls rm remove search stats unused suggest export import tags install doctor config import-rc completion"
   local shortcut_cmds="edit rm remove rename"
   local cur prev
   cur="\${COMP_WORDS[COMP_CWORD]}"

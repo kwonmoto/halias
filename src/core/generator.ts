@@ -30,41 +30,67 @@ hareload() {
 
 `;
 
+/** 문자열을 셸 작은따옴표로 안전하게 감쌈 (내부의 ' 는 '\'' 로 이스케이프). */
+function shellSingleQuote(value: string): string {
+  return `'${value.replace(/'/g, `'\\''`)}'`;
+}
+
+/**
+ * alias 명령에 인자 forwarding("$@")을 붙여도 안전한지 판정.
+ *
+ * 파이프/리다이렉트/논리연산/서브셸 등 메타문자가 있으면 "$@"가 엉뚱한 위치에
+ * 붙어 의미가 바뀐다 (예: `ls -la | less` → `ls -la | less "$@"`).
+ * 이런 경우엔 forwarding을 생략하고 명령을 그대로 실행한다.
+ */
+function canForwardArgs(command: string): boolean {
+  return !/[|&;<>`(){}]|\$\(/.test(command);
+}
+
 /**
  * Shortcut 하나를 셸 함수 정의로 변환.
  *
  * 모든 단축키를 함수로 통일 생성 — wrapper 통계를 일관되게 적용 가능.
- * - alias 타입: command를 그대로 호출하고 "$@" 전달
+ * - alias 타입: command를 호출하고, 단순 명령이면 "$@" 전달
  * - function 타입: 사용자가 작성한 본문을 그대로 사용 ($1, $2 등 사용 가능)
+ *
+ * 함수 정의는 eval 로 감싼다. 사용자 본문에 문법 오류가 하나 있어도 그 단축키만
+ * 조용히 건너뛰고, 파일 전체 source (나머지 단축키 + hareload)가 죽지 않게 격리.
  */
 function renderShortcut(shortcut: Shortcut): string {
-  const lines: string[] = [];
+  const meta: string[] = [];
 
   if (shortcut.description) {
-    lines.push(`# ${shortcut.description}`);
+    // 개행은 주석 밖으로 코드가 새는 걸 막기 위해 공백으로 평탄화
+    meta.push(`# ${shortcut.description.replace(/\r?\n/g, ' ')}`);
   }
   if (shortcut.tags.length > 0) {
-    lines.push(`# tags: ${shortcut.tags.join(', ')}`);
+    meta.push(`# tags: ${shortcut.tags.join(', ')}`);
   }
-  lines.push(`# source: ${shortcut.source}`);
+  meta.push(`# source: ${shortcut.source}`);
 
-  lines.push(`${shortcut.name}() {`);
-  lines.push(`  _halias_track "${shortcut.name}"`);
+  const body: string[] = [];
+  body.push(`${shortcut.name}() {`);
+  body.push(`  _halias_track "${shortcut.name}"`);
 
   if (shortcut.type === 'alias') {
-    // 단순 명령 + 추가 인자 forwarding
-    lines.push(`  ${shortcut.command} "$@"`);
+    body.push(canForwardArgs(shortcut.command) ? `  ${shortcut.command} "$@"` : `  ${shortcut.command}`);
   } else {
     // 함수 본문: 사용자 코드를 들여쓰기해서 삽입
     const indented = shortcut.command
       .split('\n')
       .map((line) => `  ${line}`)
       .join('\n');
-    lines.push(indented);
+    body.push(indented);
   }
 
-  lines.push('}');
-  return lines.join('\n');
+  body.push('}');
+
+  const definition = body.join('\n');
+  const guarded =
+    `eval ${shellSingleQuote(definition)} 2>/dev/null || ` +
+    `printf 'halias: skipped broken shortcut %s\\n' ${shellSingleQuote(shortcut.name)} >&2`;
+
+  return [...meta, guarded].join('\n');
 }
 
 export async function generateAliasesFile(store: Store): Promise<string> {
