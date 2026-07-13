@@ -256,6 +256,21 @@ halias 환경 점검
 - `ha list --tag` — 태그로 목록 필터
 - `ha edit` 에서 function 본문을 `$EDITOR` 로 편집, 에디터 자동 감지
 
+### v0.4.0 — 다국어 & 셸 자동완성 ✅
+
+- 영어 / 한국어 UI (`ha config lang`)
+- `ha completion zsh|bash` — 명령어·단축키 이름 탭 완성
+- `ha tags` — 태그 둘러보기 및 태그로 단축키 필터
+- `ha import-rc` — `~/.zshrc` 의 기존 alias / 함수 가져오기
+
+### v0.5.0 — 안전성 & 견고성 ✅
+
+- 파괴적 작업 전 자동 백업 + `ha restore` 로 되돌리기
+- `ha uninstall` — 셸 통합 깔끔하게 제거
+- import 시 시스템 명령어를 덮어씌우면 충돌 경고
+- `ha doctor` 가 `aliases.sh` 와 `shortcuts.json` 동기화 상태 검증
+- 단축키 하나의 문법 오류가 전체를 깨지 않도록 셸 코드 생성 강화
+
 ### 다음 버전
 
 체크리스트 채우기보다는 **실 사용에서 발견되는 마찰점** 기반으로 진행합니다.

@@ -238,6 +238,21 @@ Search results now learn from where you actually use shortcuts. Shortcuts used i
 - `ha list --tag` — filter list by tag
 - `ha edit` opens `$EDITOR` for function bodies; auto-detects installed editors
 
+### v0.4.0 — i18n & shell completion ✅
+
+- English / Korean UI (`ha config lang`)
+- `ha completion zsh|bash` — tab-complete commands and shortcut names
+- `ha tags` — browse tags and filter shortcuts by tag
+- `ha import-rc` — pull existing aliases and functions from `~/.zshrc`
+
+### v0.5.0 — Safety & robustness ✅
+
+- Automatic backup before destructive operations + `ha restore` to roll back
+- `ha uninstall` — clean removal of shell integration
+- Conflict warnings when imports would shadow system commands
+- `ha doctor` verifies `aliases.sh` is in sync with `shortcuts.json`
+- Hardened shell-code generation so one bad shortcut can't break the rest
+
 ### Future versions
 
 Driven by real usage and friction discovered in daily work, not by feature checklists.
