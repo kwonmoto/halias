@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import * as p from '@clack/prompts';
 import chalk from 'chalk';
-import { readStore, writeStore, backupStore } from '../core/store.js';
+import { readStore, mutateStore, backupStore } from '../core/store.js';
 import { generateAliasesFile } from '../core/generator.js';
 import { detectSystemCommandConflict } from '../lib/system-commands.js';
 import { StoreSchema, type Shortcut } from '../core/types.js';
@@ -131,9 +131,18 @@ export async function runImport(
   }
 
   // 5. 파괴적 작업 전 자동 백업 → 저장 → aliases.sh 재생성
+  // merge 는 락 안에서 최신 상태 기준으로 재계산 — confirm 대기 중 다른 셸의 변경 보존
   await backupStore();
-  const newStore = { version: 1 as const, shortcuts: finalShortcuts };
-  await writeStore(newStore);
+  const newStore = await mutateStore((s) => {
+    if (strategy === 'replace') {
+      return { version: 1 as const, shortcuts: imported.shortcuts };
+    }
+    const names = new Set(s.shortcuts.map((x) => x.name));
+    return {
+      ...s,
+      shortcuts: [...s.shortcuts, ...imported.shortcuts.filter((x) => !names.has(x.name))],
+    };
+  });
   await generateAliasesFile(newStore);
 
   console.log(

@@ -9,7 +9,7 @@ import { detectSystemCommandConflict } from '../lib/system-commands.js';
 import type { Shortcut } from '../core/types.js';
 import { t } from '../lib/i18n.js';
 
-interface ParsedEntry {
+export interface ParsedEntry {
   name: string;
   command: string;
   type: 'alias' | 'function';
@@ -167,7 +167,7 @@ function detectRcFile(): string {
  *   alias NAME="..." / alias NAME='...'
  *   NAME() { ...; }  (한 줄, 선택적 function 키워드)
  */
-function parseRcFile(content: string): ParsedEntry[] {
+export function parseRcFile(content: string): ParsedEntry[] {
   const results: ParsedEntry[] = [];
   const lines = content.split('\n');
 

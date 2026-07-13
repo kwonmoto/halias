@@ -1,6 +1,6 @@
 import * as p from '@clack/prompts';
 import chalk from 'chalk';
-import { readStore, writeStore } from '../core/store.js';
+import { readStore, mutateStore } from '../core/store.js';
 import { generateAliasesFile } from '../core/generator.js';
 import { ShortcutSchema } from '../core/types.js';
 import { t } from '../lib/i18n.js';
@@ -81,11 +81,13 @@ export async function runRename(oldName?: string, newName?: string): Promise<voi
     }
   }
 
-  store.shortcuts = store.shortcuts.map((s) =>
-    s.name === from ? { ...s, name: to as string, updatedAt: new Date().toISOString() } : s,
-  );
-  await writeStore(store);
-  await generateAliasesFile(store);
+  const newStore = await mutateStore((s) => ({
+    ...s,
+    shortcuts: s.shortcuts.map((x) =>
+      x.name === from ? { ...x, name: to as string, updatedAt: new Date().toISOString() } : x,
+    ),
+  }));
+  await generateAliasesFile(newStore);
 
   console.log(chalk.green(`✓ ${t('rename.done', { from, to })}`));
   console.log('  ' + chalk.dim(t('rename.reloadHint')) + chalk.cyan(t('common.hareload')));

@@ -30,6 +30,8 @@ npm install -g halias
 
 `halias` 와 `ha` 가 글로벌로 등록됩니다. 일상에서는 짧은 `ha` 를 추천해요.
 
+**지원 환경**: macOS / Linux, zsh 또는 bash, Node.js 20+. Windows 는 네이티브 미지원 — WSL 을 사용하세요.
+
 나중에 셸 통합을 제거하려면 `ha uninstall` 을 실행하세요 — `~/.zshrc` 의 halias 관리 블록(과 자동완성 설정)만 정확히 지우고, 원하면 `~/.halias` 데이터도 함께 삭제합니다.
 
 ## 빠른 시작
@@ -305,7 +307,7 @@ halias 환경 점검
 
 체크리스트 채우기보다는 **실 사용에서 발견되는 마찰점** 기반으로 진행합니다.
 
-이슈/제안은 [GitHub issues](https://github.com/hyukjunkwon/halias/issues) 환영합니다.
+이슈/제안은 [GitHub issues](https://github.com/kwonmoto/halias/issues) 환영합니다.
 
 ## 개발
 

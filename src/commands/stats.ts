@@ -1,7 +1,7 @@
 import * as p from '@clack/prompts';
 import chalk from 'chalk';
 import { aggregateStats } from '../core/stats.js';
-import { readStore, writeStore, backupStore } from '../core/store.js';
+import { readStore, mutateStore, backupStore } from '../core/store.js';
 import { generateAliasesFile } from '../core/generator.js';
 import type { Shortcut } from '../core/types.js';
 import { t } from '../lib/i18n.js';
@@ -236,9 +236,11 @@ async function runClean(
   // 파괴적 작업 전 자동 백업 (ha restore 로 되돌리기 가능)
   await backupStore();
   const nameSet = new Set(names);
-  store.shortcuts = store.shortcuts.filter((s) => !nameSet.has(s.name));
-  await writeStore(store);
-  await generateAliasesFile(store);
+  const newStore = await mutateStore((s) => ({
+    ...s,
+    shortcuts: s.shortcuts.filter((x) => !nameSet.has(x.name)),
+  }));
+  await generateAliasesFile(newStore);
 
   p.outro(
     chalk.green(`✓ ${t('stats.cleanDone', { count: names.length })}`) +

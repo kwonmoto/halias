@@ -30,6 +30,8 @@ npm install -g halias
 
 Both `halias` and `ha` will be available globally. The shorter `ha` is recommended for daily use.
 
+**Supported environments**: macOS and Linux, with zsh or bash, on Node.js 20+. Windows is not supported natively — use WSL.
+
 To remove halias' shell integration later, run `ha uninstall` — it strips the managed block from your `~/.zshrc` (and completion setup), and optionally deletes your data in `~/.halias`.
 
 ## Quick start
@@ -287,7 +289,7 @@ Search results now learn from where you actually use shortcuts. Shortcuts used i
 
 Driven by real usage and friction discovered in daily work, not by feature checklists.
 
-Suggestions and bug reports welcome via [issues](https://github.com/hyukjunkwon/halias/issues).
+Suggestions and bug reports welcome via [issues](https://github.com/kwonmoto/halias/issues).
 
 ## Development
 

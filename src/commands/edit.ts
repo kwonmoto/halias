@@ -1,6 +1,6 @@
 import * as p from '@clack/prompts';
 import chalk from 'chalk';
-import { readStore, writeStore } from '../core/store.js';
+import { readStore, mutateStore } from '../core/store.js';
 import { generateAliasesFile } from '../core/generator.js';
 import { ShortcutSchema, type Shortcut } from '../core/types.js';
 import { editFunctionBody } from '../lib/editor.js';
@@ -170,11 +170,12 @@ export async function runEdit(name?: string): Promise<void> {
     updatedAt: new Date().toISOString(),
   };
 
-  store.shortcuts = store.shortcuts.map((s) =>
-    s.name === target!.name ? updated : s,
-  );
-  await writeStore(store);
-  await generateAliasesFile(store);
+  // 락 안에서 최신 상태에 변환 적용 — 편집하는 동안 다른 셸이 저장한 변경 보존
+  const newStore = await mutateStore((s) => ({
+    ...s,
+    shortcuts: s.shortcuts.map((x) => (x.name === target!.name ? updated : x)),
+  }));
+  await generateAliasesFile(newStore);
 
   p.outro(
     chalk.green(`✓ ${updated.name} ${t('edit.outroDone')}`) +

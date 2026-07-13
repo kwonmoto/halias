@@ -243,13 +243,15 @@ CHANGELOG와 무관하게 항상 이 형식 유지.
 ```bash
 npm run dev -- <command>       # tsx로 바로 실행 (빌드 불필요, 빠름)
 npm run typecheck              # tsc --noEmit
+npm test                       # vitest (tests/ 단위 + bash/zsh 통합)
+npm run test:watch             # vitest watch 모드
 npm run build                  # tsup으로 dist/cli.js 생성
 npm run link:local             # build + npm link (글로벌 ha 등록)
 ```
 
 코드 변경 후 검증 표준 흐름:
 ```bash
-npm run typecheck && npm run build && node dist/cli.js --help
+npm run typecheck && npm test && npm run build && node dist/cli.js --help
 ```
 
 ## Release workflow
@@ -450,8 +452,15 @@ git push --follow-tags
 - **v0.5.0** — 안전성 & 견고성 (자동 백업 + `ha restore`, `ha uninstall`, import 충돌 경고, doctor 동기화 검증, 셸 코드 생성 강화, 버그픽스)
 - **v0.6.0** — 자동화 & 온보딩 (단축키별 인자 자동완성 `argComplete`, 비대화형 `ha add <name> <cmd>`, 검색 `--run`/`--copy`, `ha config editor`, 첫 실행 온보딩, 0.5.0 미포함 버그픽스)
 
-### 알려진 한계 (사용자 늘면 재평가)
-- **store 동시성 lost-update** — 두 셸에서 동시에 `ha add` 시 한쪽 유실. 제대로 고치려면 read-modify-write 를 감싸는 lockfile 필요. 단일 사용자 특성상 빈도 낮아 보류.
+### v0.7.0 (1.0 준비 — 신뢰)
+- **테스트 스위트** — vitest, `tests/` 에 core/lib 단위 + bash/zsh 통합 테스트. CI 에서 실행.
+- **store 동시성 lockfile** — `mutateStore()` 가 모든 read-modify-write 를 락으로 직렬화. lost-update 해소.
+- **지원 매트릭스 명시** — macOS/Linux × zsh/bash, Windows 는 WSL.
+
+### 1.0 후보 (첫인상 & 선언)
+- **데모 GIF** (vhs 스크립트 기반) + README 폴리시
+- **fzf `--preview` 창** — 검색 시 함수 본문 미리보기
+- **호환성 정책 선언** — 데이터 포맷 동결 + 마이그레이션 약속 명문화
 
 ### 그 이후
 실 사용자 피드백 누적되면 결정.
@@ -460,7 +469,7 @@ git push --follow-tags
 
 이 도구는 작업 도구지 production 시스템이 아니라서, 다음은 의도적으로 단순함:
 
-- **테스트 코드 없음** — 첫 실 사용자(혁준님)가 곧 테스트. 향후 외부 사용자 늘면 추가
+- ~~테스트 코드 없음~~ → v0.7.0 부터 vitest 스위트 있음 (`npm test`). 새 core/lib 로직은 테스트 동반 권장
 - **i18n 없음** — 사용자 메시지 한국어 하드코딩
 - **에러 추적/로깅 없음** — 콘솔 출력만
 - **DB 없음** — JSON 한 파일

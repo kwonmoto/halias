@@ -5,6 +5,13 @@ All notable changes to halias will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Running halias commands from two shells at the same time no longer loses updates — all store writes are now serialized through a lock file.
+- README links to the GitHub repository (issues, source) now point to the correct repo.
+
 ## [0.6.0]
 
 ### Added

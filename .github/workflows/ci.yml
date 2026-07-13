@@ -37,6 +37,10 @@ jobs:
             - name: Type check
               run: npx tsc --noEmit
 
+            # 단위 + 통합 테스트 — 생성된 aliases.sh 를 실제 bash 로 source 하는 검증 포함
+            - name: Test
+              run: npm test
+
             - name: Build
               run: npm run build
 
