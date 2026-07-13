@@ -1,10 +1,22 @@
+import { spawnSync } from 'node:child_process';
+import fs from 'node:fs/promises';
 import * as p from '@clack/prompts';
 import chalk from 'chalk';
 import { readStore } from '../core/store.js';
 import { isFzfAvailable, runFzf } from '../lib/fzf.js';
+import { copyToClipboard } from '../lib/clipboard.js';
+import { isShellIntegrationInstalled } from '../lib/shell-integration.js';
+import { STATS_LOG_PATH } from '../lib/paths.js';
 import { scoreShortcutsForDirectory, type ScoredShortcut } from '../core/stats.js';
 import type { Shortcut } from '../core/types.js';
 import { t } from '../lib/i18n.js';
+
+export interface SearchOptions {
+  /** 선택한 단축키를 바로 실행 */
+  run?: boolean;
+  /** 선택한 단축키의 명령을 클립보드에 복사 */
+  copy?: boolean;
+}
 
 /**
  * ha 인자 없이 실행 시 호출되는 검색 진입점.
@@ -12,15 +24,13 @@ import { t } from '../lib/i18n.js';
  * 흐름:
  * 1. fzf 가능 → 인터랙티브 퍼지 검색
  * 2. fzf 불가 → Clack select 폴백 (단축키가 적을 때는 이걸로도 충분)
- * 3. 선택 후 → 정보 출력 (실행은 사용자에게 맡김)
+ * 3. 선택 후 → 기본은 정보 출력, --run 은 즉시 실행, --copy 는 클립보드 복사
  */
-export async function runSearch(): Promise<void> {
+export async function runSearch(options: SearchOptions = {}): Promise<void> {
   const store = await readStore();
 
   if (store.shortcuts.length === 0) {
-    console.log(
-      chalk.dim(t('search.noShortcuts')),
-    );
+    await printOnboarding();
     return;
   }
 
@@ -50,7 +60,67 @@ export async function runSearch(): Promise<void> {
   const shortcut = store.shortcuts.find((s) => s.name === selectedName);
   if (!shortcut) return;
 
+  if (options.run) {
+    await runShortcutCommand(shortcut);
+    return;
+  }
+
+  if (options.copy) {
+    if (copyToClipboard(shortcut.command)) {
+      console.log(chalk.green(`✓ ${t('search.copyDone', { name: shortcut.name })}`));
+    } else {
+      console.log(chalk.yellow(`  ${t('search.copyFailed')}`));
+      printShortcutInfo(shortcut);
+    }
+    return;
+  }
+
   printShortcutInfo(shortcut);
+}
+
+/**
+ * --run: 선택한 단축키의 명령을 사용자 셸로 즉시 실행.
+ *
+ * 자식 셸에서 실행되므로 cd 류는 현재 셸에 반영 안 됨 — 검색→실행의 손타이핑을
+ * 없애는 용도. 함수 wrapper(_halias_track)를 거치지 않으니 통계는 직접 기록.
+ */
+async function runShortcutCommand(s: Shortcut): Promise<void> {
+  console.log(chalk.dim(`  $ ${summarizeCommand(s)}`));
+  console.log();
+
+  const shell = process.env.SHELL || '/bin/sh';
+  const result = spawnSync(shell, ['-c', s.command], { stdio: 'inherit' });
+
+  // 통계 기록 — aliases.sh 의 _halias_track 과 동일한 탭 구분 형식
+  try {
+    await fs.appendFile(
+      STATS_LOG_PATH,
+      `${Math.floor(Date.now() / 1000)}\t${s.name}\t${process.cwd()}\n`,
+    );
+  } catch {
+    // 통계는 부가 기능 — 실패해도 조용히 넘어감
+  }
+
+  if (result.status !== null && result.status !== 0) {
+    process.exitCode = result.status;
+  }
+}
+
+/**
+ * 빈 상태 온보딩 — 처음 설치한 사용자가 다음에 뭘 해야 하는지 안내.
+ * 셸 통합 미설치면 install 단계를 강조.
+ */
+async function printOnboarding(): Promise<void> {
+  const installed = await isShellIntegrationInstalled();
+
+  console.log();
+  console.log('  ' + chalk.bold(t('search.onboardTitle')));
+  console.log();
+  console.log('  1. ' + chalk.cyan('ha add') + chalk.dim(`  ${t('search.onboardAdd')}`));
+  const installLine = '  2. ' + chalk.cyan('ha install') + chalk.dim(`  ${t('search.onboardInstall')}`);
+  console.log(installed ? installLine : installLine + chalk.yellow(` ← ${t('search.onboardInstallMissing')}`));
+  console.log('  3. ' + chalk.cyan('hareload') + chalk.dim(`  ${t('search.onboardReload')}`));
+  console.log();
 }
 
 /**

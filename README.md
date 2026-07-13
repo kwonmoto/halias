@@ -67,7 +67,9 @@ hareload             # apply newly added shortcuts to current shell
 | --- | --- |
 | `ha` (no args) | Fuzzy search — find shortcuts fast |
 | `ha search` (= `ha s`) | Same as above, explicit |
+| `ha --run` / `ha --copy` | Search, then run the selection or copy its command to the clipboard |
 | `ha add` | Add a new shortcut interactively |
+| `ha add <name> <command>` | Add non-interactively (`--type`, `--desc`, `--tags`, `--force`) — for scripts and dotfiles |
 | `ha add --last [name]` | Save the last shell command as a shortcut |
 | `ha edit [name]` | Edit an existing shortcut (picker if no name) |
 | `ha rename [old] [new]` | Rename a shortcut without the full edit form |
@@ -83,6 +85,7 @@ hareload             # apply newly added shortcuts to current shell
 | `ha restore` | Revert to the last auto-backup (saved before destructive operations) |
 | `ha import-rc [file]` | Import aliases and functions from `~/.zshrc` (auto-detected if omitted) |
 | `ha config lang [en\|ko]` | Get or set the UI language |
+| `ha config editor [cmd]` | Get or set the editor used for function bodies |
 | `ha install` | Add shell integration to `~/.zshrc` |
 | `ha uninstall` | Remove shell integration from `~/.zshrc` |
 | `ha doctor` | Diagnose your environment |
@@ -122,6 +125,13 @@ mkcd  mkdir -p && cd     #fs              Make and enter directory
 ​```
 
 Search matches across **name, command body, tags, and description**. Try searching for "polled" — if you described `gp` as "pull from origin", it'll match.
+
+By default, selecting a shortcut prints its details. Add a flag to skip the retyping:
+
+```bash
+ha --run     # run the selected shortcut right away (usage is still tracked)
+ha --copy    # copy its command to the clipboard (pbcopy / wl-copy / xclip / xsel)
+```
 
 ### Context-aware ranking ⭐
 
@@ -265,6 +275,13 @@ Search results now learn from where you actually use shortcuts. Shortcuts used i
 - Conflict warnings when imports would shadow system commands
 - `ha doctor` verifies `aliases.sh` is in sync with `shortcuts.json`
 - Hardened shell-code generation so one bad shortcut can't break the rest
+
+### v0.6.0 — Automation & onboarding ✅
+
+- Per-shortcut argument tab completion (`argComplete` via `ha edit`)
+- Non-interactive `ha add <name> <command>` for scripts and dotfiles
+- `ha --run` / `ha --copy` — act on a search result without retyping
+- `ha config editor` and a first-run getting-started guide
 
 ### Future versions
 

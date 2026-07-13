@@ -67,7 +67,9 @@ hareload             # 새 단축키를 현재 셸에 즉시 반영
 | --- | --- |
 | `ha` (인자 없이) | 퍼지 검색 — 등록된 단축키 빠르게 찾기 |
 | `ha search` (= `ha s`) | 위와 동일, 명시적 호출 |
+| `ha --run` / `ha --copy` | 검색 후 선택한 단축키를 바로 실행 / 명령을 클립보드에 복사 |
 | `ha add` | 대화형으로 새 단축키 추가 |
+| `ha add <name> <command>` | 비대화형 추가 (`--type`, `--desc`, `--tags`, `--force`) — 스크립트/dotfiles 용 |
 | `ha add --last [name]` | 직전에 실행한 셸 명령을 단축키로 저장 |
 | `ha edit [name]` | 기존 단축키 편집 (이름 없으면 선택 화면) |
 | `ha rename [old] [new]` | 전체 폼 없이 이름만 빠르게 변경 |
@@ -83,6 +85,7 @@ hareload             # 새 단축키를 현재 셸에 즉시 반영
 | `ha restore` | 마지막 자동 백업으로 되돌리기 (파괴적 작업 직전 저장분) |
 | `ha import-rc [파일]` | `~/.zshrc` 등 rc 파일에서 alias / 함수 가져오기 (파일 미지정 시 자동 감지) |
 | `ha config lang [en\|ko]` | UI 언어 설정 확인 / 변경 |
+| `ha config editor [cmd]` | 함수 본문 편집용 에디터 확인 / 변경 |
 | `ha install` | `~/.zshrc` 에 셸 통합 추가 |
 | `ha uninstall` | `~/.zshrc` 에서 셸 통합 제거 |
 | `ha doctor` | 환경 점검 (fzf, 셸 통합, 위험 단축키 등) |
@@ -125,6 +128,13 @@ mkcd  mkdir -p && cd     #fs              폴더 만들고 이동
 ​```
 
 검색은 **이름, 명령 본문, 태그, 설명** 모두에 대해 동작합니다. "폴더" 같은 한국어 설명으로도 매치돼요.
+
+기본은 선택한 단축키의 정보 출력. 플래그를 붙이면 손타이핑을 없앨 수 있습니다:
+
+```bash
+ha --run     # 선택한 단축키를 바로 실행 (사용 통계도 기록됨)
+ha --copy    # 명령을 클립보드에 복사 (pbcopy / wl-copy / xclip / xsel)
+```
 
 ### 컨텍스트 인식 정렬 ⭐
 
@@ -283,6 +293,13 @@ halias 환경 점검
 - import 시 시스템 명령어를 덮어씌우면 충돌 경고
 - `ha doctor` 가 `aliases.sh` 와 `shortcuts.json` 동기화 상태 검증
 - 단축키 하나의 문법 오류가 전체를 깨지 않도록 셸 코드 생성 강화
+
+### v0.6.0 — 자동화 & 온보딩 ✅
+
+- 단축키별 인자 자동완성 (`ha edit` 에서 `argComplete` 설정)
+- 스크립트/dotfiles 용 비대화형 `ha add <name> <command>`
+- `ha --run` / `ha --copy` — 검색 결과를 손타이핑 없이 바로 사용
+- `ha config editor` 및 첫 실행 시작 가이드
 
 ### 다음 버전
 

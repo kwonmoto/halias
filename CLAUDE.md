@@ -448,12 +448,7 @@ git push --follow-tags
 - **v0.3.0** — 관리 & 편집 UX (`ha unused` / `rename` / `list --tag`, `$EDITOR` 편집)
 - **v0.4.0** — 다국어(en/ko) + 셸 자동완성 + `ha tags` + `ha import-rc`
 - **v0.5.0** — 안전성 & 견고성 (자동 백업 + `ha restore`, `ha uninstall`, import 충돌 경고, doctor 동기화 검증, 셸 코드 생성 강화, 버그픽스)
-
-### v0.6 후보 (자동화 & 온보딩)
-- **비대화형 `ha add <name> <cmd> --flags`** — 프롬프트 없이 추가 (dotfiles/스크립트 자동화)
-- **검색 결과 `--run` / 클립보드 복사** — 검색 후 손타이핑 제거
-- **`ha config editor`** — 저장된 에디터 CLI로 변경 (로직은 이미 있음, 노출만)
-- **첫 실행 onboarding** — 빈 상태에서 `ha` 입력 시 install 안내
+- **v0.6.0** — 자동화 & 온보딩 (단축키별 인자 자동완성 `argComplete`, 비대화형 `ha add <name> <cmd>`, 검색 `--run`/`--copy`, `ha config editor`, 첫 실행 온보딩, 0.5.0 미포함 버그픽스)
 
 ### 알려진 한계 (사용자 늘면 재평가)
 - **store 동시성 lost-update** — 두 셸에서 동시에 `ha add` 시 한쪽 유실. 제대로 고치려면 read-modify-write 를 감싸는 lockfile 필요. 단일 사용자 특성상 빈도 낮아 보류.

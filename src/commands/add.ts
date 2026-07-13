@@ -133,6 +133,70 @@ export async function runAdd(options: AddOptions = {}): Promise<void> {
   await confirmAndSaveShortcut(shortcut);
 }
 
+export interface AddNonInteractiveOptions {
+  type?: string;
+  desc?: string;
+  tags?: string;
+  force?: boolean;
+}
+
+/**
+ * ha add <name> <command...> — 프롬프트 없이 한 줄로 추가.
+ *
+ * dotfiles 셋업 스크립트나 CI 같은 비대화형 환경용. 검증 실패나 시스템 명령어
+ * 충돌(--force 미지정)은 throw — cli.ts 최상단 catch 가 에러 출력 + exit 1.
+ */
+export async function runAddNonInteractive(
+  name: string,
+  commandParts: string[],
+  options: AddNonInteractiveOptions = {},
+): Promise<void> {
+  const command = commandParts.join(' ').trim();
+  if (!command) throw new Error(t('add.commandRequired'));
+
+  const type = options.type ?? 'alias';
+  if (type !== 'alias' && type !== 'function') {
+    throw new Error(t('add.invalidType', { value: type }));
+  }
+
+  const store = await readStore();
+  const existingNames = new Set(store.shortcuts.map((s) => s.name));
+  const nameError = validateShortcutName(name, existingNames);
+  if (nameError) throw new Error(nameError);
+
+  // 대화형에선 confirm 으로 진행 여부를 묻지만, 여기선 --force 가 그 역할
+  const conflict = detectSystemCommandConflict(name);
+  if (conflict.conflict && !options.force) {
+    throw new Error(`${conflict.reason ?? ''} ${t('add.forceHint')}`);
+  }
+
+  const now = new Date().toISOString();
+  const shortcut: Shortcut = {
+    name,
+    command,
+    type,
+    description: options.desc || undefined,
+    tags: (options.tags ?? '')
+      .split(',')
+      .map((tag) => tag.trim())
+      .filter(Boolean),
+    source: 'personal',
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  await addShortcut(shortcut);
+  const updated = await readStore();
+  await generateAliasesFile(updated);
+
+  console.log(
+    chalk.green(`✓ ${name} ${t('add.outroDone')}`) +
+      chalk.dim(`  (${type})  `) +
+      chalk.dim(t('add.outroReloadHint')) +
+      chalk.cyan(t('common.hareload')),
+  );
+}
+
 export async function runAddFromCommand(
   name: string | undefined,
   command: string,

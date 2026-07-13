@@ -17,7 +17,7 @@ import { initLocale, t } from './lib/i18n.js';
 const pkg = JSON.parse(
   readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../package.json'), 'utf-8'),
 ) as { version: string };
-import { runAdd } from './commands/add.js';
+import { runAdd, runAddNonInteractive } from './commands/add.js';
 import { runList } from './commands/list.js';
 import { runInstall } from './commands/install.js';
 import { runRemove } from './commands/remove.js';
@@ -33,7 +33,7 @@ import { runRename } from './commands/rename.js';
 import { runCompletion } from './commands/completion.js';
 import { runTags } from './commands/tags.js';
 import { runImportRc } from './commands/import-rc.js';
-import { runConfigLang } from './commands/config.js';
+import { runConfigLang, runConfigEditor } from './commands/config.js';
 
 initLocale();
 
@@ -44,25 +44,44 @@ program
   .description(t('cli.description'))
   .version(pkg.version);
 
-// 디폴트 액션: 'ha' 만 입력 시 퍼지 검색.
+// 디폴트 액션: 'ha' 만 입력 시 퍼지 검색. --run / --copy 는 선택 후 동작 변경.
+program
+  .option('--run', t('cli.searchOptRun'))
+  .option('--copy', t('cli.searchOptCopy'));
 program.action(async () => {
-  await runSearch();
+  const opts = program.opts<{ run?: boolean; copy?: boolean }>();
+  await runSearch({ run: opts.run, copy: opts.copy });
 });
 
 program
   .command('search')
   .alias('s')
   .description(t('cli.search'))
-  .action(async () => {
-    await runSearch();
+  .option('--run', t('cli.searchOptRun'))
+  .option('--copy', t('cli.searchOptCopy'))
+  .action(async (options: { run?: boolean; copy?: boolean }) => {
+    await runSearch(options);
   });
 
 program
-  .command('add [name]')
+  .command('add [name] [command...]')
   .description(t('cli.add'))
   .option('--last', t('cli.addOptLast'))
-  .action(async (name: string | undefined, options: { last?: boolean }) => {
-    await runAdd({ name, last: options.last });
+  .option('--type <type>', t('cli.addOptType'), 'alias')
+  .option('--desc <text>', t('cli.addOptDesc'))
+  .option('--tags <tags>', t('cli.addOptTags'))
+  .option('--force', t('cli.addOptForce'))
+  .action(async (
+    name: string | undefined,
+    commandParts: string[],
+    options: { last?: boolean; type?: string; desc?: string; tags?: string; force?: boolean },
+  ) => {
+    // 이름 + 명령이 함께 오면 비대화형, 아니면 기존 대화형 플로우
+    if (name && commandParts.length > 0) {
+      await runAddNonInteractive(name, commandParts, options);
+    } else {
+      await runAdd({ name, last: options.last });
+    }
   });
 
 program
@@ -185,6 +204,14 @@ program
       .argument('[value]', t('cli.configLangArg'))
       .action(async (value?: string) => {
         await runConfigLang(value);
+      })
+  )
+  .addCommand(
+    new Command('editor')
+      .description(t('cli.configEditor'))
+      .argument('[value]', t('cli.configEditorArg'))
+      .action(async (value?: string) => {
+        await runConfigEditor(value);
       })
   );
 

@@ -5,11 +5,15 @@ All notable changes to halias will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.6.0]
 
 ### Added
 
 - Per-shortcut argument tab completion. Set an argument completion command via `ha edit <name>` — any shell command printing candidates one per line — and `<shortcut> <Tab>` completes from its live output. Works in zsh and bash; a failing candidate command degrades silently without affecting the shortcut.
+- Non-interactive add: `ha add <name> <command> [--type alias|function] [--desc <text>] [--tags <csv>] [--force]` skips all prompts — for scripts and dotfiles setup. `--force` is required to shadow a system command.
+- `ha --run` / `ha search --run` executes the selected shortcut immediately after fuzzy search (usage stats still recorded); `ha --copy` copies its command to the clipboard (pbcopy / wl-copy / xclip / xsel).
+- `ha config editor [cmd]` — view or change the editor used for function-body editing, without going through the interactive picker.
+- First-run onboarding: running `ha` with no shortcuts now prints a getting-started guide and flags a missing `ha install`.
 
 ### Changed
 
