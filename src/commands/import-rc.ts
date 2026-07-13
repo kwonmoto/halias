@@ -195,12 +195,23 @@ function parseRcFile(content: string): ParsedEntry[] {
 
 /** `alias NAME="COMMAND"` 파싱 */
 function parseAliasLine(line: string, lineNum: number): ParsedEntry | null {
-  // alias NAME="VALUE" or alias NAME='VALUE'
-  const m = line.match(/^alias\s+([A-Za-z_][A-Za-z0-9_-]*)=(['"])(.*)\2\s*$/);
-  if (!m) return null;
-  const [, name, , command] = m;
-  if (!name || !command) return null;
-  return { name, command, type: 'alias', line: lineNum };
+  // 1) 따옴표 형태: alias NAME="VALUE" / alias NAME='VALUE'  (뒤에 # 주석 허용)
+  const quoted = line.match(/^alias\s+([A-Za-z_][A-Za-z0-9_-]*)=(['"])(.*)\2\s*(?:#.*)?$/);
+  if (quoted) {
+    const [, name, , command] = quoted;
+    if (name && command) return { name, command, type: 'alias', line: lineNum };
+    return null;
+  }
+
+  // 2) 따옴표 없는 단일 토큰: alias ll=ls  (뒤에 # 주석 허용)
+  //    값에 공백이 있으면 셸에서도 alias 로 안 먹으므로 단일 토큰만 대상.
+  const bare = line.match(/^alias\s+([A-Za-z_][A-Za-z0-9_-]*)=(\S+?)\s*(?:#.*)?$/);
+  if (bare) {
+    const [, name, command] = bare;
+    if (name && command) return { name, command, type: 'alias', line: lineNum };
+  }
+
+  return null;
 }
 
 /**

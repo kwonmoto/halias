@@ -6,9 +6,17 @@
  *   halias add     # 정식 이름
  *   ha add         # 일상 사용용 단축
  */
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { initLocale, t } from './lib/i18n.js';
+
+// package.json 에서 버전을 읽어 단일 소스화 (하드코딩 시 릴리즈마다 어긋남)
+const pkg = JSON.parse(
+  readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../package.json'), 'utf-8'),
+) as { version: string };
 import { runAdd } from './commands/add.js';
 import { runList } from './commands/list.js';
 import { runInstall } from './commands/install.js';
@@ -34,7 +42,7 @@ const program = new Command();
 program
   .name('halias')
   .description(t('cli.description'))
-  .version('0.2.0');
+  .version(pkg.version);
 
 // 디폴트 액션: 'ha' 만 입력 시 퍼지 검색.
 program.action(async () => {

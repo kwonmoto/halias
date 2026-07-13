@@ -27,7 +27,10 @@ export interface StatsOptions {
  *   ha stats --unused     → 한 번도 안 쓴 단축키 + 30일 이상 미사용
  */
 export async function runStats(options: StatsOptions = {}): Promise<void> {
-  const since = parseSince(options.since);
+  const { since, invalid } = parseSince(options.since);
+  if (invalid) {
+    console.log(chalk.yellow(`  ${t('stats.sinceInvalid', { input: invalid })}`));
+  }
   const topN = parseInt(options.top ?? '10', 10);
 
   const [agg, store] = await Promise.all([aggregateStats({ since }), readStore()]);
@@ -282,16 +285,25 @@ function truncate(str: string, maxLen: number): string {
 }
 
 /**
- * "7d", "24h", "30m" 같은 형식을 Date(현재 - 기간)로 변환.
- * 형식 어긋나면 undefined 반환 (필터 미적용).
+ * "7d", "24h", "30m", "2w", "1y" 같은 형식을 Date(현재 - 기간)로 변환.
+ *
+ * - 입력 없음: { since: undefined } (필터 미적용, 정상)
+ * - 형식 어긋남: { since: undefined, invalid: <원본> } — 호출부에서 경고 표시
+ *   (조용히 무시하면 사용자가 필터가 안 먹은 걸 모름)
  */
-function parseSince(input: string | undefined): Date | undefined {
-  if (!input) return undefined;
-  const match = input.match(/^(\d+)([dhm])$/);
-  if (!match) return undefined;
+function parseSince(input: string | undefined): { since: Date | undefined; invalid?: string } {
+  if (!input) return { since: undefined };
+  const match = input.match(/^(\d+)([mhdwy])$/);
+  if (!match) return { since: undefined, invalid: input };
   const [, numStr, unit] = match;
   const num = parseInt(numStr ?? '0', 10);
-  const multipliers = { m: 60_000, h: 3_600_000, d: 86_400_000 } as const;
+  const multipliers = {
+    m: 60_000,
+    h: 3_600_000,
+    d: 86_400_000,
+    w: 604_800_000,
+    y: 31_536_000_000,
+  } as const;
   const ms = num * multipliers[unit as keyof typeof multipliers];
-  return new Date(Date.now() - ms);
+  return { since: new Date(Date.now() - ms) };
 }
