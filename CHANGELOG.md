@@ -7,9 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-07-13
+
+halias 1.0 — the data formats (`shortcuts.json` v1, `stats.log`, the rc marker block) and documented CLI surface are now frozen under semver. See the "Stability promise" section in the README.
+
 ### Added
 
 - Fuzzy search now shows a live preview pane (fzf `--preview`) with the highlighted shortcut's full command body, description, tags, and argument-completion setup.
+- Demo GIF and a written stability promise in the README.
 
 ## [0.7.0] - 2026-07-13
 

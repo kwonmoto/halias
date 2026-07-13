@@ -295,6 +295,16 @@ Search results now learn from where you actually use shortcuts. Shortcuts used i
 - `ha --run` / `ha --copy` — act on a search result without retyping
 - `ha config editor` and a first-run getting-started guide
 
+### v0.7.0 — Trust ✅
+
+- Test suite (unit + real bash/zsh integration) running in CI
+- Lock-file serialization of all store writes — no lost updates across shells
+- Documented support matrix
+
+### v1.0.0 — Stability declaration ✅
+
+- Fuzzy-search preview pane, demo GIF, and the stability promise above
+
 ### Future versions
 
 Driven by real usage and friction discovered in daily work, not by feature checklists.
