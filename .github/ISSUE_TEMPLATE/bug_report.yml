@@ -1,0 +1,28 @@
+name: Bug report
+description: Something isn't working as documented
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you run, what did you expect, what happened instead?
+      placeholder: |
+        1. Ran `ha add ...`
+        2. Expected ...
+        3. Got ...
+    validations:
+      required: true
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      description: Paste the output of `ha doctor` and `ha --version`, plus your OS and shell.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Relevant parts of `~/.halias/shortcuts.json` or `~/.halias/generated/aliases.sh` (redact anything private).
