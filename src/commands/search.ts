@@ -1,5 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import * as p from '@clack/prompts';
 import chalk from 'chalk';
 import { readStore } from '../core/store.js';
@@ -164,15 +166,49 @@ async function searchWithFzf(
       .trimEnd();
   });
 
-  const result = await runFzf(lines.join('\n'), {
-    prompt: t('search.fzfPrompt'),
-    header: t('search.fzfHeader', { count: shortcuts.length }),
-    // --no-sort 로 외부 정렬(점수순) 유지 — fzf 가 자체 정렬 못 하게.
-    extraArgs: ['--no-sort'],
-  });
+  // 미리보기: 단축키별 상세를 임시 파일로 준비 → fzf --preview 로 연결.
+  // {1} = 첫 필드(이름). 이름은 [a-zA-Z0-9_-] 만 허용되어 파일명으로 안전.
+  const previewDir = await fs.mkdtemp(path.join(os.tmpdir(), 'halias-preview-'));
+  await Promise.all(
+    shortcuts.map((s) => fs.writeFile(path.join(previewDir, s.name), renderPreview(s), 'utf-8')),
+  );
 
-  if (!result) return null;
-  return result.trim().split(/\s+/)[0] ?? null;
+  try {
+    const result = await runFzf(lines.join('\n'), {
+      prompt: t('search.fzfPrompt'),
+      header: t('search.fzfHeader', { count: shortcuts.length }),
+      // --no-sort 로 외부 정렬(점수순) 유지 — fzf 가 자체 정렬 못 하게.
+      extraArgs: [
+        '--no-sort',
+        '--height=60%',
+        '--preview', `cat '${previewDir}'/{1}`,
+        '--preview-window', 'right,45%,wrap,border-left',
+      ],
+    });
+
+    if (!result) return null;
+    return result.trim().split(/\s+/)[0] ?? null;
+  } finally {
+    await fs.rm(previewDir, { recursive: true, force: true }).catch(() => {});
+  }
+}
+
+/** fzf 미리보기 창에 표시할 단축키 상세 (ANSI 컬러 지원). */
+function renderPreview(s: Shortcut): string {
+  const lines: string[] = [];
+  lines.push(`${chalk.bold.cyan(s.name)} ${chalk.dim(`(${s.type})`)}`);
+  if (s.description) lines.push(chalk.dim(s.description));
+  lines.push('');
+  s.command.split('\n').forEach((line) => lines.push(chalk.green(line)));
+  if (s.tags.length > 0) {
+    lines.push('');
+    lines.push(chalk.dim(`# ${s.tags.join(', ')}`));
+  }
+  if (s.argComplete) {
+    lines.push('');
+    lines.push(chalk.dim(`tab: ${s.argComplete}`));
+  }
+  return lines.join('\n') + '\n';
 }
 
 /**

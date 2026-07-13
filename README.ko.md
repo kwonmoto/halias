@@ -8,6 +8,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](https://nodejs.org)
 
+![halias 데모 — 단축키 추가, 미리보기와 함께 퍼지 검색, 사용 통계](https://raw.githubusercontent.com/kwonmoto/halias/main/docs/demo.gif)
+
 ## 무엇이 다른가요?
 
 기존 alias 관리는 `~/.zshrc` 를 매번 열어 편집해야 했습니다. **halias** 는 그걸 개인용 command layer 처럼 만들었어요:
@@ -267,6 +269,14 @@ halias 환경 점검
 ```
 
 모두 plain text 라 버전 관리도 가능하고 백업도 쉽습니다.
+
+## 안정성 약속
+
+사용자 데이터와 셸 설정은 공개 API 로 취급합니다:
+
+- **`shortcuts.json` (스키마 v1)**, **`stats.log` 형식**, **rc 마커 블록**(`# >>> halias shortcuts >>>`)은 동결되어 있습니다. 새 필드는 옵셔널로만 추가되며, 기존 파일은 아무 조치 없이 계속 동작합니다.
+- 형식을 깨는 변경이 필요해지면 **메이저 버전**에서만, **자동 마이그레이션**과 이전 데이터 백업(`shortcuts.json.bak-v1`)을 동반해 배포합니다.
+- 명령 이름과 문서화된 플래그는 semver 를 따릅니다 — 같은 메이저 버전 안에서 깨지지 않습니다.
 
 ## 로드맵
 

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Fuzzy search now shows a live preview pane (fzf `--preview`) with the highlighted shortcut's full command body, description, tags, and argument-completion setup.
+
 ## [0.7.0] - 2026-07-13
 
 ### Fixed

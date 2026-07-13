@@ -8,6 +8,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](https://nodejs.org)
 
+![halias demo — add a shortcut, fuzzy-search with preview, view usage stats](https://raw.githubusercontent.com/kwonmoto/halias/main/docs/demo.gif)
+
 ## What's different?
 
 Managing shell aliases used to mean editing `.zshrc` by hand. **halias** turns it into a personal command layer:
@@ -249,6 +251,14 @@ halias environment check
 ```
 
 Everything is plain text, version-controllable, and easy to back up.
+
+## Stability promise
+
+Your data and shell setup are treated as a public API:
+
+- **`shortcuts.json` (schema v1)**, the **`stats.log` format**, and the **rc marker block** (`# >>> halias shortcuts >>>`) are frozen. New fields are only added optionally — existing files keep working without any action.
+- If a breaking format change is ever needed, it ships in a **major version** with an **automatic migration** and a backup of your previous data (`shortcuts.json.bak-v1`).
+- Command names and their documented flags follow semver: they don't break within a major version.
 
 ## Roadmap
 
