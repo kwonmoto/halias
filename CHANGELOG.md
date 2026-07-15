@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Homebrew installation: `brew install kwonmoto/tap/halias` (installs Node automatically if needed).
+
 ## [1.1.0] - 2026-07-13
 
 ### Added

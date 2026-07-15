@@ -28,6 +28,8 @@ Managing shell aliases used to mean editing `.zshrc` by hand. **halias** turns i
 
 ```bash
 npm install -g halias
+# or, via Homebrew (installs Node automatically if needed)
+brew install kwonmoto/tap/halias
 ```
 
 Both `halias` and `ha` will be available globally. The shorter `ha` is recommended for daily use.

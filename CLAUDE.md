@@ -266,6 +266,10 @@ npm version patch              # 또는 minor / major
 # 4. push (--follow-tags 가 핵심: tag도 같이)
 git push --follow-tags
 # → release.yml이 자동으로 npm publish + GitHub Release 생성
+
+# 5. Homebrew formula 갱신 (npm publish 완료 후)
+#    ~/work/homebrew-tap/Formula/halias.rb 의 url 버전 + sha256 교체
+#    sha256: curl -sL https://registry.npmjs.org/halias/-/halias-<ver>.tgz | shasum -a 256
 ```
 
 ⚠️ 절대 하지 말 것:

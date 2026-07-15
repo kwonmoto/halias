@@ -28,6 +28,8 @@
 
 ```bash
 npm install -g halias
+# 또는 Homebrew 로 (Node 가 없으면 자동으로 함께 설치됩니다)
+brew install kwonmoto/tap/halias
 ```
 
 `halias` 와 `ha` 가 글로벌로 등록됩니다. 일상에서는 짧은 `ha` 를 추천해요.
