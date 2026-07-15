@@ -310,7 +310,9 @@ Search results now learn from where you actually use shortcuts. Shortcuts used i
 
 ### Future versions
 
-Driven by real usage and friction discovered in daily work, not by feature checklists.
+- **MCP server** — expose your shortcuts and per-directory usage stats to AI coding agents as personal context. AI generates a long command once; `ha add --last` keeps it; your agent learns what you actually use where.
+
+Beyond that: driven by real usage and friction discovered in daily work, not by feature checklists.
 
 Suggestions and bug reports welcome via [issues](https://github.com/kwonmoto/halias/issues).
 
